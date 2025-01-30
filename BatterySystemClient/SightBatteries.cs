@@ -14,6 +14,7 @@ using EFT.InventoryLogic;
 using UnityEngine.Experimental.GlobalIllumination;
 using BatterySystem.Configs;
 using UnityEngine;
+using static CC_Vintage;
 
 namespace BatterySystem
 {
@@ -32,9 +33,9 @@ namespace BatterySystem
 
         public static void SetSightComponents(SightModVisualControllers sightInstance)
         {
-            LootItemClass lootItem = sightInstance.SightMod.Item as LootItemClass;
+            LootContainerItemClass lootItem = sightInstance.SightMod.Item as LootContainerItemClass;
 
-            bool _hasBatterySlot(LootItemClass loot, string[] filters = null)
+            bool _hasBatterySlot(LootContainerItemClass loot, string[] filters = null)
             {
                 //use default parameter if nothing specified (any drainable battery)
                 filters = filters ?? new string[] { BatterySystemPlugin.AABatteryId, BatterySystemPlugin.CR2032BatteryId, BatterySystemPlugin.CR123BatteryId };
