@@ -35,14 +35,16 @@ namespace BatterySystem
         {
             LootContainerItemClass lootItem = sightInstance.SightMod.Item as LootContainerItemClass;
 
-            bool _hasBatterySlot(LootContainerItemClass loot, string[] filters = null)
+            bool _hasBatterySlot(LootContainerItemClass loot, List<string> filters = null)
             {
                 //use default parameter if nothing specified (any drainable battery)
-                filters = filters ?? new string[] { BatterySystemPlugin.AABatteryId, BatterySystemPlugin.CR2032BatteryId, BatterySystemPlugin.CR123BatteryId };
+                filters = filters ?? new List<string> { BatterySystemPlugin.AABatteryId, BatterySystemPlugin.CR2032BatteryId, BatterySystemPlugin.CR123BatteryId };
                 foreach (Slot slot in loot.Slots)
                 {
                     if (slot.Filters.FirstOrDefault()?.Filter.Any(sfilter => filters.Contains(sfilter)) == true)
-                        return true;
+                    {
+                       return true;
+                    }
                 }
                 return false;
             }
