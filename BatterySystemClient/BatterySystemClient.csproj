@@ -38,7 +38,7 @@
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\spt398_dev\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.21.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -60,7 +60,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies\Mono.Data.Sqlite.dll</HintPath>
     </Reference>
-    <Reference Include="spt-reflection, Version=3.9.4.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="spt-reflection, Version=3.10.5, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies\spt-reflection.dll</HintPath>
     </Reference>
@@ -100,7 +100,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Dependencies\0Harmony.dll" />
-    <Content Include="Dependencies\Assembly-CSharp.dll" />
     <Content Include="Dependencies\BepInEx.dll" />
     <Content Include="Dependencies\Comfort.dll" />
     <Content Include="Dependencies\ItemComponent.Types.dll" />

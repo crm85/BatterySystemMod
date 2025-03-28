@@ -34,6 +34,10 @@ namespace BatterySystem
         public static void SetSightComponents(SightModVisualControllers sightInstance)
         {
             LootContainerItemClass lootItem = sightInstance.SightMod.Item as LootContainerItemClass;
+            if (lootItem == null)
+            {
+                return;
+            }
 
             bool _hasBatterySlot(LootContainerItemClass loot, List<string> filters = null)
             {
