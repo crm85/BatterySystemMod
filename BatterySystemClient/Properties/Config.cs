@@ -8,14 +8,15 @@ namespace BatterySystem.Configs
 		public static ConfigEntry<float> DrainMultiplier { get; private set; }
 		public static ConfigEntry<bool> EnableHeadsets { get; private set; }
 		public static ConfigEntry<bool> AutoUnfold { get; private set; }
-		//public static ConfigEntry<int> SpawnDurabilityMin { get; private set; }
-		//public static ConfigEntry<int> SpawnDurabilityMax { get; private set; }
+        public static ConfigEntry<bool> IsRealism { get; private set; }
+        //public static ConfigEntry<int> SpawnDurabilityMin { get; private set; }
+        //public static ConfigEntry<int> SpawnDurabilityMax { get; private set; }
 
-		//public static ConfigEntry<float> CompressorMixerVolume { get; private set; }
-		//public static ConfigEntry<float> MainMixerVolume { get; private set; }
-		//public static ConfigEntry<float> CompressorGain { get; private set; }
+        //public static ConfigEntry<float> CompressorMixerVolume { get; private set; }
+        //public static ConfigEntry<float> MainMixerVolume { get; private set; }
+        //public static ConfigEntry<float> CompressorGain { get; private set; }
 
-		private static string generalSettings = "General Settings";
+        private static string generalSettings = "General Settings";
 
 		public static void Init(ConfigFile Config)
 		{
@@ -40,8 +41,13 @@ namespace BatterySystem.Configs
 					null,
 					new ConfigurationManagerAttributes { IsAdvanced = true, Order = -50 }));
 
+                IsRealism = Config.Bind(generalSettings, "Using Realism Mod", true,
+                    new ConfigDescription("Toggle for Realism users; affects how headset volume is handled. CAUTION: if using Realism and you don't toggle this on, the mod will throw an error!",
+                    null,
+                    new ConfigurationManagerAttributes { IsAdvanced = false, Order = 50 }));
 
-				/*SpawnDurabilityMin = Config.Bind(generalSettings, "Spawn Durability Min", 5,
+
+                /*SpawnDurabilityMin = Config.Bind(generalSettings, "Spawn Durability Min", 5,
 					new ConfigDescription("Adjust the minimum durability a battery can spawn with on bots.",
 					new AcceptableValueRange<int>(0, 100),
 					new ConfigurationManagerAttributes { IsAdvanced = false, Order = -50 }));
@@ -61,7 +67,7 @@ namespace BatterySystem.Configs
 					new AcceptableValueRange<float>(-30f, 10f),
 					new ConfigurationManagerAttributes { IsAdvanced = false, Order = -230 }));
 				*/
-			}
+            }
 		}
 	}
 }

@@ -53,11 +53,17 @@ namespace BatterySystem
             //headset has no battery
             else if (headsetItem != null)
             {
-                Singleton<BetterAudio>.Instance.Master.SetFloat("CompressorMakeup", 0f);
-                Singleton<BetterAudio>.Instance.Master.SetFloat("Compressor", compressor - 15f);
-                Singleton<BetterAudio>.Instance.Master.SetFloat("MainVolume", -10f);
-                _drainingEarPieceBattery = false;
-                DeafenController.HeadSetGain = DeafenController.MinGain;
+                if (!BatterySystemConfig.IsRealism.Value)
+                {
+                    Singleton<BetterAudio>.Instance.Master.SetFloat("CompressorMakeup", 0f);
+                    Singleton<BetterAudio>.Instance.Master.SetFloat("Compressor", compressor - 15f);
+                    Singleton<BetterAudio>.Instance.Master.SetFloat("MainVolume", -10f);
+                    _drainingEarPieceBattery = false;
+                }
+                else
+                {
+                    DeafenController.HeadSetGain = DeafenController.MinGain;
+                }
             }
             //no headset equipped
             else
