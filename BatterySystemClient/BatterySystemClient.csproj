@@ -34,18 +34,27 @@
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\spt_311_dev\BepInEx\core\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="AnimationSystem.Types">
+      <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\AnimationSystem.Types.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.21.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\BepInEx.dll</HintPath>
+      <HintPath>..\..\..\spt_311_dev\BepInEx\core\BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx.Harmony">
+      <HintPath>..\..\..\spt_311_dev\BepInEx\core\BepInEx.Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx.Preloader">
+      <HintPath>..\..\..\spt_311_dev\BepInEx\core\BepInEx.Preloader.dll</HintPath>
     </Reference>
     <Reference Include="Comfort, Version=1.0.0.4, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\Comfort.dll</HintPath>
+      <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
     </Reference>
     <Reference Include="ItemComponent.Types, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -59,9 +68,18 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies\Mono.Data.Sqlite.dll</HintPath>
     </Reference>
+    <Reference Include="RealismMod">
+      <HintPath>..\..\..\spt_311_dev\BepInEx\plugins\RealismMod.dll</HintPath>
+    </Reference>
+    <Reference Include="spt-common">
+      <HintPath>..\..\..\spt_311_dev\BepInEx\plugins\spt\spt-common.dll</HintPath>
+    </Reference>
+    <Reference Include="spt-core">
+      <HintPath>..\..\..\spt_311_dev\BepInEx\plugins\spt\spt-core.dll</HintPath>
+    </Reference>
     <Reference Include="spt-reflection, Version=3.10.5, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\spt-reflection.dll</HintPath>
+      <HintPath>..\..\..\spt_311_dev\BepInEx\plugins\spt\spt-reflection.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -73,7 +91,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -81,7 +99,10 @@
     </Reference>
     <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -98,16 +119,7 @@
     <Compile Include="TacticalDeviceBatteries.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Dependencies\0Harmony.dll" />
-    <Content Include="Dependencies\BepInEx.dll" />
-    <Content Include="Dependencies\Comfort.dll" />
-    <Content Include="Dependencies\ItemComponent.Types.dll" />
-    <Content Include="Dependencies\ItemTemplate.Types.dll" />
-    <Content Include="Dependencies\Mono.Data.Sqlite.dll" />
-    <Content Include="Dependencies\spt-reflection.dll" />
-    <Content Include="Dependencies\UnityEngine.AudioModule.dll" />
-    <Content Include="Dependencies\UnityEngine.CoreModule.dll" />
-    <Content Include="Dependencies\UnityEngine.dll" />
+    <Folder Include="Dependencies\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
