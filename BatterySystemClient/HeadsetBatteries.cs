@@ -6,6 +6,7 @@ using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Linq;
 using System.Reflection;
+using RealismMod;
 
 namespace BatterySystem
 {
@@ -56,6 +57,7 @@ namespace BatterySystem
                 Singleton<BetterAudio>.Instance.Master.SetFloat("Compressor", compressor - 15f);
                 Singleton<BetterAudio>.Instance.Master.SetFloat("MainVolume", -10f);
                 _drainingEarPieceBattery = false;
+                DeafenController.HeadSetGain = DeafenController.MinGain;
             }
             //no headset equipped
             else

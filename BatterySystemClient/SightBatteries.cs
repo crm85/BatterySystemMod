@@ -2,19 +2,12 @@
 using EFT;
 using HarmonyLib;
 using SPT.Reflection.Patching;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Comfort.Common;
 using EFT.CameraControl;
 using EFT.InventoryLogic;
-using UnityEngine.Experimental.GlobalIllumination;
-using BatterySystem.Configs;
-using UnityEngine;
-using static CC_Vintage;
 
 namespace BatterySystem
 {
@@ -98,25 +91,26 @@ namespace BatterySystem
                 // true for finding inactive gameobject reticles
                 foreach (CollimatorSight col in key.gameObject.GetComponentsInChildren<CollimatorSight>(true))
                 {
-                    /*
-                    Color fadeColor = col.CollimatorMaterial.color;
+                    
+                    UnityEngine.Color fadeColor = col.CollimatorMaterial.color;
                     fadeColor.a = .3f;
                     col.CollimatorMaterial.color = fadeColor;
-                    */
                     col.gameObject.SetActive(_drainingSightBattery);
                 }
                 
                 foreach (OpticSight optic in key.gameObject.GetComponentsInChildren<OpticSight>(true))
                 {
 					//for nv sights
-					/*if (optic.NightVision != null)
+                    /*
+					if (optic.NightVision != null)
 					{
-						Logger.LogWarning("OPTIC ENABLED: " + optic.NightVision?.enabled);
+						//Logger.LogWarning("OPTIC ENABLED: " + optic.NightVision?.enabled);
 						//PlayerInitPatch.nvgOnField.SetValue(optic.NightVision, _drainingSightBattery);
 						optic.NightVision.enabled = _drainingSightBattery;
 						Logger.LogWarning("OPTIC ON: " + optic.NightVision.On);
 						continue;
-					}*/
+					}
+                    */
                     if (key.SightMod.Item.Template.Parent._id != "55818ad54bdc2ddc698b4569" &&
                         key.SightMod.Item.Template.Parent._id != "5c0a2cec0db834001b7ce47d") //Exceptions for hhs-1 (tan)
                         optic.enabled = _drainingSightBattery;
