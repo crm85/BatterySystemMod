@@ -58,15 +58,7 @@
     </Reference>
     <Reference Include="ItemComponent.Types, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\ItemComponent.Types.dll</HintPath>
-    </Reference>
-    <Reference Include="ItemTemplate.Types, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\ItemTemplate.Types.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Data.Sqlite, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\Mono.Data.Sqlite.dll</HintPath>
+      <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
     </Reference>
     <Reference Include="RealismMod">
       <HintPath>..\..\..\spt_311_dev\BepInEx\plugins\RealismMod.dll</HintPath>
@@ -93,9 +85,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\UnityEngine.AudioModule.dll</HintPath>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>..\..\..\spt_311_dev\EscapeFromTarkov_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
