@@ -6,6 +6,7 @@ using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
 using RealismMod;
 
 namespace BatterySystem
