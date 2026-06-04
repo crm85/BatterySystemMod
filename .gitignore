@@ -446,3 +446,5 @@ FodyWeavers.xsd
 /BatterySystemServer/BatterySystemServer.njsproj
 /BatterySystemServer/packageBuild.ts
 /BatterySystemServer/types/*
+/assem
+/realism
