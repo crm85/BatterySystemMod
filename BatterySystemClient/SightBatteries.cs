@@ -8,6 +8,7 @@ using System.Reflection;
 using Comfort.Common;
 using EFT.CameraControl;
 using EFT.InventoryLogic;
+using UnityEngine;
 
 namespace BatterySystem
 {
@@ -18,53 +19,37 @@ namespace BatterySystem
 
         public static void TrackBatteries()
         {
-            foreach (SightModVisualControllers sightController in sightMods.Keys) // sights on active weapon
-                if (BatterySystem.IsInSlot(sightController.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot)
-                    && !BatterySystemPlugin.batteryDictionary.ContainsKey(sightController.SightMod.Item))
+            foreach (SightModVisualControllers sightController in sightMods.Keys.ToArray()) // sights on active weapon
+            {
+                if (sightController?.SightMod?.Item == null) continue;
+                if (!BatterySystem.IsInSlot(sightController.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot)) continue;
+                if (!BatterySystemPlugin.batteryDictionary.ContainsKey(sightController.SightMod.Item))
                     BatterySystemPlugin.batteryDictionary.Add(sightController.SightMod.Item, sightMods[sightController]?.Value > 0);
+            }
         }
 
-        public static void SetSightComponents(SightModVisualControllers sightInstance)
+        public static void SetSightComponents(SightModVisualControllers sightInstance, bool updateState = true)
         {
-            LootContainerItemClass lootItem = sightInstance.SightMod.Item as LootContainerItemClass;
-            if (lootItem == null)
-            {
-                return;
-            }
-
-            bool _hasBatterySlot(LootContainerItemClass loot, List<string> filters = null)
-            {
-                //use default parameter if nothing specified (any drainable battery)
-                filters = filters ?? new List<string> { BatterySystemPlugin.AABatteryId, BatterySystemPlugin.CR2032BatteryId, BatterySystemPlugin.CR123BatteryId };
-                foreach (Slot slot in loot.Slots)
-                {
-                    if (slot.Filters.FirstOrDefault()?.Filter.Any(sfilter => filters.Contains(sfilter)) == true)
-                    {
-                       return true;
-                    }
-                }
-                return false;
-            }
+            if (sightInstance?.SightMod?.Item == null) return;
 
             //before applying new sights, remove sights that are not on equipped weapon
             for (int i = sightMods.Keys.Count - 1; i >= 0; i--)
             {
                 SightModVisualControllers key = sightMods.Keys.ElementAt(i);
-                if (!BatterySystem.IsInSlot(key.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot))
+                if (key?.SightMod?.Item == null || !BatterySystem.IsInSlot(key.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot))
                     sightMods.Remove(key);
             }
 
-            if (BatterySystem.IsInSlot(sightInstance.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot) && _hasBatterySlot(lootItem))
+            if (BatterySystem.IsInSlot(sightInstance.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot)
+                && BatterySystem.HasBatterySlot(sightInstance.SightMod.Item))
             {
                 // if sight is already in dictionary, dont add it
-                if (!sightMods.Keys.Any(key => key.SightMod.Item == sightInstance.SightMod.Item)
-                    && (sightInstance.SightMod.Item.Template.Parent._id == "55818acf4bdc2dde698b456b" //compact collimator
-                    || sightInstance.SightMod.Item.Template.Parent._id == "55818ad54bdc2ddc698b4569" //collimator
-                    || sightInstance.SightMod.Item.Template.Parent._id == "55818aeb4bdc2ddc698b456a")) //Special Scope
-                {
+                if (!sightMods.Keys.Any(key => key?.SightMod?.Item == sightInstance.SightMod.Item))
                     sightMods.Add(sightInstance, sightInstance.SightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault());
-                }
             }
+
+            if (!updateState) return;
+
             CheckSightIfDraining();
             BatterySystem.UpdateBatteryDictionary();
         }
@@ -73,44 +58,38 @@ namespace BatterySystem
         {
             //for because modifying sightMods[key]
             var keys = sightMods.Keys.ToArray();
-            bool anyOpticsWithBattery = false;
             foreach (SightModVisualControllers key in keys)
             {
-                if (key?.SightMod?.Item == null) continue;
+                if (key?.SightMod?.Item == null || !BatterySystem.IsInSlot(key.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot))
+                {
+                    sightMods.Remove(key);
+                    continue;
+                }
                 
                 sightMods[key] = key.SightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault();
                 _drainingSightBattery = (sightMods[key] != null && sightMods[key].Value > 0
                     && BatterySystem.IsInSlot(key.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot));
                 
-                if (_drainingSightBattery)
-                    anyOpticsWithBattery = true;
-
                 if (BatterySystemPlugin.batteryDictionary.ContainsKey(key.SightMod.Item))
                     BatterySystemPlugin.batteryDictionary[key.SightMod.Item] = _drainingSightBattery;
 
                 // true for finding inactive gameobject reticles
                 foreach (CollimatorSight col in key.gameObject.GetComponentsInChildren<CollimatorSight>(true))
                 {
-                    
-                    UnityEngine.Color fadeColor = col.CollimatorMaterial.color;
-                    fadeColor.a = .3f;
-                    col.CollimatorMaterial.color = fadeColor;
+                    if (col.CollimatorMaterial != null)
+                    {
+                        Color fadeColor = col.CollimatorMaterial.color;
+                        fadeColor.a = .3f;
+                        col.CollimatorMaterial.color = fadeColor;
+                    }
+
                     col.gameObject.SetActive(_drainingSightBattery);
                 }
                 
                 foreach (OpticSight optic in key.gameObject.GetComponentsInChildren<OpticSight>(true))
                 {
-					//for nv sights
-                    /*
-					if (optic.NightVision != null)
-					{
-						//Logger.LogWarning("OPTIC ENABLED: " + optic.NightVision?.enabled);
-						//PlayerInitPatch.nvgOnField.SetValue(optic.NightVision, _drainingSightBattery);
-						optic.NightVision.enabled = _drainingSightBattery;
-						Logger.LogWarning("OPTIC ON: " + optic.NightVision.On);
-						continue;
-					}
-                    */
+                    SetOpticNightVision(optic, _drainingSightBattery);
+
                     if (key.SightMod.Item.Template.Parent._id != "55818ad54bdc2ddc698b4569" &&
                         key.SightMod.Item.Template.Parent._id != "5c0a2cec0db834001b7ce47d") //Exceptions for hhs-1 (tan)
                         optic.enabled = _drainingSightBattery;
@@ -119,6 +98,20 @@ namespace BatterySystem
             
             //Dont change iron sights unless there are optics attached
             //FoldableSightPatch.FoldIronSights(anyOpticsWithBattery);
+        }
+
+        private static void SetOpticNightVision(OpticSight optic, bool active)
+        {
+            object opticNightVision = AccessTools.Property(optic.GetType(), "NightVision")?.GetValue(optic, null)
+                ?? AccessTools.Field(optic.GetType(), "NightVision")?.GetValue(optic);
+            if (opticNightVision == null) return;
+
+            if (opticNightVision is Behaviour nightVisionBehaviour)
+                nightVisionBehaviour.enabled = active;
+
+            AccessTools.Property(opticNightVision.GetType(), "enabled")?.SetValue(opticNightVision, active, null);
+            if (!active)
+                AccessTools.Property(opticNightVision.GetType(), "On")?.SetValue(opticNightVision, false, null);
         }
     }
 
@@ -176,7 +169,15 @@ namespace BatterySystem
             if (weaponOwnerPlayer == null) return;
             if (!weaponOwnerPlayer.IsYourPlayer) return;
 
+            var weaponRoot = __instance.HandsContainer?.Weapon;
+            if (weaponRoot != null)
+            {
+                foreach (SightModVisualControllers sightController in weaponRoot.GetComponentsInChildren<SightModVisualControllers>(true))
+                    SightBatteries.SetSightComponents(sightController, false);
+            }
+
             SightBatteries.CheckSightIfDraining();
+            BatterySystem.UpdateBatteryDictionary();
         }
     }
 /*

@@ -63,20 +63,25 @@ namespace BatterySystem
 
         public static void CheckHeadWearIfDraining()
         {
-            //TODO simplify this
-            _drainingNightVisionBattery = NightVisionBattery != null && NightVisionBattery.Value > 0
-                && (_nvgDevice == null && _thermalDevice != null
-                ? (((ITogglableComponentContainer)_thermalDevice).Togglable.On && !CameraClass.Instance.ThermalVision.InProcessSwitching)
-                : (_nvgDevice != null && _thermalDevice == null && ((ITogglableComponentContainer)_nvgDevice).Togglable.On && !CameraClass.Instance.NightVision.InProcessSwitching));
-            // headWear has battery with resource installed and headwear (nvg/thermal) isn't switching and is on
+            bool hasChargedBattery = NightVisionBattery != null && NightVisionBattery.Value > 0;
+            bool nvgShouldRun = hasChargedBattery
+                && _nvgDevice != null
+                && ((ITogglableComponentContainer)_nvgDevice).Togglable.On
+                && CameraClass.Instance?.NightVision?.InProcessSwitching == false;
+            bool thermalShouldRun = hasChargedBattery
+                && _thermalDevice != null
+                && ((ITogglableComponentContainer)_thermalDevice).Togglable.On
+                && CameraClass.Instance?.ThermalVision?.InProcessSwitching == false;
+
+            _drainingNightVisionBattery = nvgShouldRun || thermalShouldRun;
 
             if (NightVisionBattery != null && BatterySystemPlugin.batteryDictionary.ContainsKey(GetHeadwearSight()))
                 BatterySystemPlugin.batteryDictionary[GetHeadwearSight()] = _drainingNightVisionBattery;
 
-            if (_nvgDevice != null)
-                CameraClass.Instance.NightVision.On = _drainingNightVisionBattery;
-            if (_thermalDevice != null)
-                CameraClass.Instance.ThermalVision.On = _drainingNightVisionBattery;
+            if (CameraClass.Instance?.NightVision != null)
+                CameraClass.Instance.NightVision.On = nvgShouldRun;
+            if (CameraClass.Instance?.ThermalVision != null)
+                CameraClass.Instance.ThermalVision.On = thermalShouldRun;
         }
     }
 

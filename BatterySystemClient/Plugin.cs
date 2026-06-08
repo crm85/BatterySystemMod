@@ -17,13 +17,14 @@ namespace BatterySystem
 	 * flir does not require batteries, make recharge craft
 	 * battery recharger - idea by Props
 	 */
-	[BepInPlugin("com.jiro.batterysystem", "BatterySystem (SPT 3.10 Refactor!)", "1.6.0")]
+	[BepInPlugin("com.jiro.batterysystem", "BatterySystem", "1.7.0")]
 	//[BepInDependency("com.AKI.core", "3.8.0")]
 	public class BatterySystemPlugin : BaseUnityPlugin
 	{
 		public const string AABatteryId = "5672cb124bdc2d1a0f8b4568";
 		public const string CR2032BatteryId = "5672cb304bdc2dc2088b456a";
 		public const string CR123BatteryId = "590a358486f77429692b2790";
+		public const string CarBatteryId = "5733279d245977289b77ec24";
         public static Dictionary<Item, bool> batteryDictionary = new Dictionary<Item, bool>();
         //resource drain all batteries that are on // using dictionary to help and sync draining batteries
 
@@ -43,13 +44,19 @@ namespace BatterySystem
 			new TacticalDevicePatch().Enable();
 			new NvgHeadWearPatch().Enable();
 			new ThermalHeadWearPatch().Enable();
+			new BatteryResourceAttributePatch().Enable();
+			new TrainSummonPatch().Enable();
             //new FoldableSightPatch().Enable();
 
             InvokeRepeating(nameof(Heartbeat), 1, 1);
 		}
 
 		//Gets called every second
-		private void Heartbeat() => DrainBatteries();
+		private void Heartbeat()
+		{
+			HeadsetBatteries.CheckEarPieceIfDraining();
+			DrainBatteries();
+		}
 
         private static void DrainBatteries()
 		{

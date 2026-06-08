@@ -50,25 +50,22 @@ namespace BatterySystem
         private static void AddBatteriesToBot(Player botPlayer)
         {
             Inventory _botInventory = botPlayer.InventoryController.Inventory;
-            Item AABatteryItem = Singleton<ItemFactoryClass>.Instance.GetPresetItem(BatterySystemPlugin.AABatteryId);
-            Item CR2032Item = Singleton<ItemFactoryClass>.Instance.GetPresetItem(BatterySystemPlugin.CR2032BatteryId);
-            Item CR123Item = Singleton<ItemFactoryClass>.Instance.GetPresetItem(BatterySystemPlugin.CR123BatteryId);
-            foreach (Item item in _botInventory.Equipment.GetAllItems())
+            foreach (Item item in _botInventory.Equipment.GetAllItems().ToArray())
             {
-	            if (!(item is LootContainerItemClass lootItem)) continue;
+	            if (!(item is CompoundItem compoundItem)) continue;
 	            
-                foreach (Slot slot in lootItem.AllSlots)
+                foreach (Slot slot in compoundItem.AllSlots.ToArray())
                 {
-					Item battery = null;
-					if (slot.CheckCompatibility(AABatteryItem))
-						battery = AABatteryItem.CloneItem();
-                    if (slot.CheckCompatibility(CR2032Item))
-                        battery = CR2032Item.CloneItem();
-                    if (slot.CheckCompatibility(CR123Item))
-                        battery = CR123Item.CloneItem();
+                    if (slot.ContainedItem != null) continue;
 
-					if (battery == null) continue;
+                    string batteryTemplateId = BatterySystem.GetBatteryTemplateId(slot);
+                    if (batteryTemplateId == null) continue;
 
+					Item battery = Singleton<ItemFactoryClass>.Instance.CreateItem(MongoID.Generate(), batteryTemplateId, null);
+                    if (battery == null || !slot.CheckCompatibility(battery)) continue;
+
+                    battery.StackObjectsCount = 1;
+                    battery.SpawnedInSession = true;
                     slot.Add(battery, false);
                     DrainSpawnedBattery(battery, botPlayer);
                 }
@@ -83,18 +80,18 @@ namespace BatterySystem
 			{
 				if (batteryResource.MaxResource <= 0) continue;
 				
-				//TODO simplify & configurable avg value
-				var resourceAvg = random.Next(0, 5);
-				//Use player level to determine battery charge
-				if (botPlayer.Side == EPlayerSide.Usec || botPlayer.Side == EPlayerSide.Bear)
-					resourceAvg = (int)(botPlayer.Profile.Info.Level / 150f * batteryResource.MaxResource);
-				
 				//Boss always have full battery
 				if(botPlayer.AIData?.BotOwner?.Boss?.IamBoss == true)
-					resourceAvg = (int)batteryResource.MaxResource;
-				
-                batteryResource.Value = Mathf.Clamp(random.Next(resourceAvg - 10, Mathf.Min(resourceAvg + 5)), 
-                    0, batteryResource.MaxResource);
+                {
+                    batteryResource.Value = batteryResource.MaxResource;
+                    continue;
+                }
+
+                int configuredMin = Mathf.Clamp(Mathf.Min(BatterySystemConfig.SpawnDurabilityMin.Value, BatterySystemConfig.SpawnDurabilityMax.Value), 0, 100);
+                int configuredMax = Mathf.Clamp(Mathf.Max(BatterySystemConfig.SpawnDurabilityMin.Value, BatterySystemConfig.SpawnDurabilityMax.Value), 0, 100);
+                int chargePercent = random.Next(configuredMin, configuredMax + 1);
+
+                batteryResource.Value = Mathf.Clamp(chargePercent / 100f * batteryResource.MaxResource, 0, batteryResource.MaxResource);
 			}
 		}
 	}

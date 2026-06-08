@@ -22,27 +22,24 @@ namespace BatterySystem
         {
             var lightModKeys = lightMods.Keys.ToArray();
             foreach (TacticalComboVisualController deviceController in lightModKeys) // tactical devices on active weapon
-                if (IsInActiveSlot(deviceController.LightMod.Item))
+                if (deviceController?.LightMod?.Item != null && IsInActiveSlot(deviceController.LightMod.Item))
                     BatterySystemPlugin.batteryDictionary[deviceController.LightMod.Item] = lightMods[deviceController]?.Value > 0;
         }
 
         public static void SetDeviceComponents(TacticalComboVisualController deviceInstance)
         {
+            if (deviceInstance?.LightMod?.Item == null) return;
+
             var lightModKeys = lightMods.Keys.ToArray();
             foreach (TacticalComboVisualController deviceController in lightModKeys)
-                if (!IsInActiveSlot(deviceController.LightMod.Item))
+                if (deviceController?.LightMod?.Item == null || !IsInActiveSlot(deviceController.LightMod.Item))
                     lightMods.Remove(deviceController);
 
-            if (IsInActiveSlot(deviceInstance.LightMod.Item))
+            if (IsInActiveSlot(deviceInstance.LightMod.Item) && BatterySystem.HasBatterySlot(deviceInstance.LightMod.Item))
             {
                 // if sight is already in dictionary, dont add it
-                if (!lightMods.Keys.Any(key => key.LightMod.Item == deviceInstance.LightMod.Item)
-                    && (deviceInstance.LightMod.Item.Template.Parent._id == "55818b084bdc2d5b648b4571" //flashlight
-                    || deviceInstance.LightMod.Item.Template.Parent._id == "55818b0e4bdc2dde698b456e" //laser
-                    || deviceInstance.LightMod.Item.Template.Parent._id == "55818b164bdc2ddc698b456c")) //combo
-                {
+                if (!lightMods.Keys.Any(key => key?.LightMod?.Item == deviceInstance.LightMod.Item))
                     lightMods.Add(deviceInstance, deviceInstance.LightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault());
-                }
             }
             CheckDeviceIfDraining();
             BatterySystem.UpdateBatteryDictionary();
@@ -52,7 +49,11 @@ namespace BatterySystem
         {
             var lightModKeys = lightMods.Keys.ToArray();
             foreach (TacticalComboVisualController deviceController in lightModKeys) {
-                if (deviceController?.LightMod?.Item == null) continue;
+                if (deviceController?.LightMod?.Item == null || !IsInActiveSlot(deviceController.LightMod.Item))
+                {
+                    lightMods.Remove(deviceController);
+                    continue;
+                }
 
                 ResourceComponent deviceBattery = deviceController.LightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault();
                 lightMods[deviceController] = deviceBattery;

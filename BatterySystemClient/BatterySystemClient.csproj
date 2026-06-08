@@ -56,9 +56,6 @@
     <Reference Include="ItemComponent.Types">
       <HintPath>..\..\..\spt_311\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
     </Reference>
-    <Reference Include="RealismMod">
-      <HintPath>..\..\..\spt_311\BepInEx\plugins\RealismMod.dll</HintPath>
-    </Reference>
     <Reference Include="spt-core">
       <HintPath>..\..\..\spt_311\BepInEx\plugins\spt\spt-core.dll</HintPath>
     </Reference>
@@ -97,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BatterySystem.cs" />
+    <Compile Include="BatteryResourceAttributePatch.cs" />
     <Compile Include="HeadsetBatteries.cs" />
     <Compile Include="NightVisionBatteries.cs" />
     <Compile Include="ApplyItemPatch.cs" />
@@ -107,6 +105,7 @@
     <Compile Include="SightBatteries.cs" />
     <Compile Include="SpawnPatch.cs" />
     <Compile Include="TacticalDeviceBatteries.cs" />
+    <Compile Include="TrainSummonPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Dependencies\" />

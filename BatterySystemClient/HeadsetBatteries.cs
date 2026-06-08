@@ -4,10 +4,10 @@ using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using SPT.Reflection.Patching;
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
-using RealismMod;
 
 namespace BatterySystem
 {
@@ -19,6 +19,9 @@ namespace BatterySystem
         public static float compressorMakeup;
         // compressor is used because the default 
         public static float compressor;
+        private static float mainVolume;
+        private static bool _hasAudioDefaults;
+        private static Type _realismDeafenControllerType;
 
         public static void TrackBatteries()
         {
@@ -48,28 +51,26 @@ namespace BatterySystem
             //headset has charged battery installed
             if (headsetBattery != null && headsetBattery.Value > 0)
             {
-                MethodInvoker.GetHandler(AccessTools.Method(typeof(Player), "UpdatePhonesReally"));
                 _drainingEarPieceBattery = true;
+                if (!TrySetRealismHeadsetState(true))
+                    RestoreVanillaAudio();
             }
             //headset has no battery
             else if (headsetItem != null)
             {
-                if (!BatterySystemConfig.IsRealism.Value)
+                if (!TrySetRealismHeadsetState(false))
                 {
                     Singleton<BetterAudio>.Instance.Master.SetFloat("CompressorMakeup", 0f);
                     Singleton<BetterAudio>.Instance.Master.SetFloat("Compressor", compressor - 15f);
                     Singleton<BetterAudio>.Instance.Master.SetFloat("MainVolume", -10f);
                     _drainingEarPieceBattery = false;
                 }
-                else
-                {
-                    DeafenController.HeadSetGain = DeafenController.MinGain;
-                }
             }
             //no headset equipped
             else
             {
-                MethodInvoker.GetHandler(AccessTools.Method(typeof(Player), "UpdatePhonesReally"));
+                if (!TrySetRealismHeadsetState(false))
+                    RestoreVanillaAudio();
                 _drainingEarPieceBattery = false;
             }
 
@@ -77,21 +78,84 @@ namespace BatterySystem
                 BatterySystemPlugin.batteryDictionary[headsetItem] = _drainingEarPieceBattery;
         }
 
+        public static void CaptureVanillaAudioDefaults()
+        {
+            Singleton<BetterAudio>.Instance.Master.GetFloat("Compressor", out compressor);
+            Singleton<BetterAudio>.Instance.Master.GetFloat("CompressorMakeup", out compressorMakeup);
+            Singleton<BetterAudio>.Instance.Master.GetFloat("MainVolume", out mainVolume);
+            _hasAudioDefaults = true;
+        }
+
+        private static void RestoreVanillaAudio()
+        {
+            if (!_hasAudioDefaults) return;
+
+            Singleton<BetterAudio>.Instance.Master.SetFloat("Compressor", compressor);
+            Singleton<BetterAudio>.Instance.Master.SetFloat("CompressorMakeup", compressorMakeup);
+            Singleton<BetterAudio>.Instance.Master.SetFloat("MainVolume", mainVolume);
+        }
+
+        private static bool TrySetRealismHeadsetState(bool hasPoweredHeadset)
+        {
+            Type deafenControllerType = GetRealismDeafenControllerType();
+            if (deafenControllerType == null) return false;
+
+            AccessTools.Property(deafenControllerType, "HasHeadSet")?.SetValue(null, hasPoweredHeadset, null);
+            if (!hasPoweredHeadset)
+            {
+                AccessTools.Property(deafenControllerType, "HeadSetGain")?.SetValue(null, GetRealismMinGain(deafenControllerType), null);
+                AccessTools.Property(deafenControllerType, "EarProtectionFactor")?.SetValue(null, GetHelmetProtectionFactor(), null);
+            }
+
+            return true;
+        }
+
+        private static Type GetRealismDeafenControllerType()
+        {
+            if (_realismDeafenControllerType != null) return _realismDeafenControllerType;
+
+            _realismDeafenControllerType = Type.GetType("RealismMod.DeafenController, RealismMod", false);
+            return _realismDeafenControllerType;
+        }
+
+        private static float GetRealismMinGain(Type deafenControllerType)
+        {
+            FieldInfo minGainField = AccessTools.Field(deafenControllerType, "MinGain");
+            if (minGainField?.GetRawConstantValue() is object minGain)
+                return Convert.ToSingle(minGain);
+
+            return -10f;
+        }
+
+        private static float GetHelmetProtectionFactor()
+        {
+            Item headwear = BatterySystemPlugin.localInventory?.Equipment.GetSlot(EquipmentSlot.Headwear)?.ContainedItem;
+            if (headwear is CompoundItem && headwear is ArmorItemClass armorItem && armorItem.Armor != null)
+            {
+                switch (armorItem.Armor.Deaf)
+                {
+                    case EDeafStrength.Low:
+                        return 0.9f;
+                    case EDeafStrength.High:
+                        return 0.8f;
+                }
+            }
+
+            return 1f;
+        }
+
         private static Item GetEarpiece()
         {
             if (BatterySystemPlugin.localInventory == null) return null;
             //Try get headphones from "Earpiece" slot
-            if(BatterySystemPlugin.localInventory.Equipment.GetSlot(EquipmentSlot.Earpiece).Items?.FirstOrDefault() is Item headphones) return headphones;
+            if(BatterySystemPlugin.localInventory.Equipment.GetSlot(EquipmentSlot.Earpiece).ContainedItem is Item headphones) return headphones;
             //Try get headphones from helmet attachment slot
-            const string headphonesParentId = "5645bcb74bdc2ded0b8b4578";
-            if (BatterySystemPlugin.localInventory.Equipment.GetSlot(EquipmentSlot.Headwear).Items?.FirstOrDefault() is LootContainerItemClass helmet)
+            if (BatterySystemPlugin.localInventory.Equipment.GetSlot(EquipmentSlot.Headwear).ContainedItem is CompoundItem helmet)
             {
                 foreach (Item helmetAttachment in helmet.GetAllItems())
                 {
-                    if (helmetAttachment == null) continue;
-                    if (!helmetAttachment.Template.Parent._id.Equals(headphonesParentId)) continue;
-                    
-                    return helmetAttachment;
+                    if (helmetAttachment is HeadphonesItemClass)
+                        return helmetAttachment;
                 }
             }
 
@@ -106,13 +170,13 @@ namespace BatterySystem
             return typeof(Player).GetMethod(nameof(Player.UpdatePhones));
         }
         [PatchPostfix]
+        [HarmonyPriority(Priority.Last)]
         public static void PatchPostfix(ref Player __instance) //BetterAudio __instance
         {
             if (!BatterySystemPlugin.InGame()) return;
             if (!__instance.IsYourPlayer) return;
             
-            Singleton<BetterAudio>.Instance.Master.GetFloat("Compressor", out HeadsetBatteries.compressor);
-            Singleton<BetterAudio>.Instance.Master.GetFloat("CompressorMakeup", out HeadsetBatteries.compressorMakeup);
+            HeadsetBatteries.CaptureVanillaAudioDefaults();
             HeadsetBatteries.SetEarPieceComponents();
         }
     }

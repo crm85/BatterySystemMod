@@ -29,8 +29,7 @@ namespace BatterySystem
 		static void Postfix(ref Slot __instance) // limit to only player asap
 		{
 			if (!BatterySystemPlugin.InGame()) return;
-			//Make sure slot is part of local player
-			if (!__instance.ContainedItem.ParentRecursiveCheck(BatterySystemPlugin.localInventory.Equipment.GetSlot(EquipmentSlot.Headwear).ParentItem)) return;
+			if (!BatterySystem.IsLocalEquipmentSlot(__instance)) return;
 			
 			HeadsetBatteries.SetEarPieceComponents();
 			NightVisionBatteries.SetHeadWearComponents();

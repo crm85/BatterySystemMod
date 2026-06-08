@@ -1,36 +1,53 @@
-import { DependencyContainer } from "tsyringe";
-
-import { ILogger } from "@spt/models/spt/utils/ILogger"
-import { IPostDBLoadMod } from "@spt/models/external/IPostDBLoadMod";
-//import { CustomItemService } from "@spt/services/mod/CustomItemService";
-//import { NewItemFromCloneDetails } from "@spt/models/spt/mod/NewItemDetails";
-import { DatabaseServer } from "@spt/servers/DatabaseServer";
-import * as config from "../config/config.json";
-import { TraderPurchaseData } from "@spt/models/eft/profile/ISptProfile";
-
-class Mod implements IPostDBLoadMod {
-    private batteryType = "";
-    private readonly aaBatteryID = "5672cb124bdc2d1a0f8b4568";
-    private readonly cr2032BatteryID = "5672cb304bdc2dc2088b456a";
-    private readonly cr123BatteryID = "590a358486f77429692b2790";
-    private readonly carBatteryID = "5733279d245977289b77ec24";
-    private readonly specialScopeID = "55818aeb4bdc2ddc698b456a";
-    private readonly nightVisionID = "5a2c3a9486f774688b05e574";
-    private readonly thermalVisionID = "5d21f59b6dbe99052b54ef83";
-    private readonly collimatorID = "55818ad54bdc2ddc698b4569";
-    private readonly compactCollimatorID = "55818acf4bdc2dde698b456b";
-    private readonly assaultScopeID = "55818add4bdc2d5b648b456f";
-    private readonly opticScopeID = "55818ae44bdc2dde698b456c";
-    private readonly headsetID = "5645bcb74bdc2ded0b8b4578";
-    private readonly flashlightID = "55818b084bdc2d5b648b4571";
-    private readonly lightLaserDesignatorID = "55818b0e4bdc2dde698b456e";
-    private readonly tacticalComboID = "55818b164bdc2ddc698b456c";
-
-    public postDBLoad(container: DependencyContainer): void {
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const config = __importStar(require("../config/config.json"));
+class Mod {
+    constructor() {
+        this.batteryType = "";
+        this.aaBatteryID = "5672cb124bdc2d1a0f8b4568";
+        this.cr2032BatteryID = "5672cb304bdc2dc2088b456a";
+        this.cr123BatteryID = "590a358486f77429692b2790";
+        this.carBatteryID = "5733279d245977289b77ec24";
+        this.specialScopeID = "55818aeb4bdc2ddc698b456a";
+        this.nightVisionID = "5a2c3a9486f774688b05e574";
+        this.thermalVisionID = "5d21f59b6dbe99052b54ef83";
+        this.collimatorID = "55818ad54bdc2ddc698b4569";
+        this.compactCollimatorID = "55818acf4bdc2dde698b456b";
+        this.assaultScopeID = "55818add4bdc2d5b648b456f";
+        this.opticScopeID = "55818ae44bdc2dde698b456c";
+        this.headsetID = "5645bcb74bdc2ded0b8b4578";
+        this.flashlightID = "55818b084bdc2d5b648b4571";
+        this.lightLaserDesignatorID = "55818b0e4bdc2dde698b456e";
+        this.tacticalComboID = "55818b164bdc2ddc698b456c";
+    }
+    postDBLoad(container) {
         //const CustomItem = container.resolve<CustomItemService>("CustomItemService");
-        const logger = container.resolve<ILogger>("WinstonLogger");
-        const db = container.resolve<DatabaseServer>("DatabaseServer");
-        const locales = Object.values(db.getTables().locales.global) as Record<string, string>[];
+        const logger = container.resolve("WinstonLogger");
+        const db = container.resolve("DatabaseServer");
+        const locales = Object.values(db.getTables().locales.global);
         const botDB = db.getTables().bots.types;
         const items = db.getTables().templates.items;
         const hideoutProduction = db.getTables().hideout.production;
@@ -42,25 +59,19 @@ class Mod implements IPostDBLoadMod {
         //Flir has a built-in battery. the battery doesn't show anywhere so no point
         //items[flirID]._props.MaxResource = 100;
         //items[flirID]._props.Resource = 0.05;
-
-
         items[aaBatteryID]._props.MaxResource = 100;
         items[aaBatteryID]._props.Resource = 100;
         items[aaBatteryID]._props.ItemSound = "food_tin_can";
-        
         items[rchblBatteryID]._props.MaxResource = 100;
         items[rchblBatteryID]._props.Resource = 100;
-        items[rchblBatteryID]._props.Prefab.path = "batteries/cr123.bundle"
+        items[rchblBatteryID]._props.Prefab.path = "batteries/cr123.bundle";
         items[rchblBatteryID]._props.ItemSound = "food_tin_can";
-
         items[dBatteryID]._props.MaxResource = 100;
         items[dBatteryID]._props.Resource = 100;
         items[dBatteryID]._props.Prefab.path = "batteries/cr2032.bundle";
         items[dBatteryID]._props.ItemSound = "food_tin_can";
-
         items[carBatteryID]._props.MaxResource = 100;
         items[carBatteryID]._props.Resource = 100;
-
         //Credit to Jehree! // 16 locales, wtf?
         for (const locale of locales) {
             locale[`${rchblBatteryID} Name`] = "CR123 Rechargeable Battery";
@@ -69,21 +80,18 @@ class Mod implements IPostDBLoadMod {
             locale[`${dBatteryID} Name`] = "CR2032 Battery";
             locale[`${dBatteryID} ShortName`] = "CR2032";
             locale[`${dBatteryID} Description`] = "A multipurpose CR2032 Battery. Used from personal computers to military grade sights.";
-        };
-
+        }
+        ;
         // huge thanks and credit to jbs4mx! https://github.com/jbs4bmx/SpecialSlots/
         const pockets = items["627a4e6b255f7527fb05a0f6"];
         this.pushUnique(pockets._props.Slots[0]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
         this.pushUnique(pockets._props.Slots[1]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
         this.pushUnique(pockets._props.Slots[2]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
-
         //S I C C case now fits batteries in it
         this.pushUnique(items["5d235bb686f77443f4331278"]._props.Grids[0]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
-
         //add battery slots to wanted items
         for (let id in items) {
             if (this.shouldAddBatterySlot(id, items)) {
-
                 this.batteryType = this.getBatteryType(id, items);
                 for (const locale of locales) { // Item description now includes the battery type
                     const oldDescription = locale[`${id} Description`] ?? "";
@@ -93,28 +101,26 @@ class Mod implements IPostDBLoadMod {
                         : "Uses " + batteryName + "\n\n" + oldDescription;
                     locale[`${id} Description`] = newDescription;
                 }
-                if (items[id]._props.Slots.some(slot => slot._name === "mod_equipment")) continue;
-
-                items[id]._props.Slots.push(
-                    {
-                        "_name": "mod_equipment",
-                        "_id": "id_" + id.toLowerCase(),
-                        "_parent": "parent_" + id.toLowerCase(),
-                        "_props": {
-                            "filters": [
-                                {
-                                    "Shift": 0,
-                                    "Filter": [
-                                        this.batteryType
-                                    ]
-                                }
-                            ]
-                        },
-                        "_required": false,
-                        "_mergeSlotWithChildren": false,
-                        "_proto": "55d30c4c4bdc2db4468b457e"
-                    }
-                );
+                if (items[id]._props.Slots.some(slot => slot._name === "mod_equipment"))
+                    continue;
+                items[id]._props.Slots.push({
+                    "_name": "mod_equipment",
+                    "_id": "id_" + id.toLowerCase(),
+                    "_parent": "parent_" + id.toLowerCase(),
+                    "_props": {
+                        "filters": [
+                            {
+                                "Shift": 0,
+                                "Filter": [
+                                    this.batteryType
+                                ]
+                            }
+                        ]
+                    },
+                    "_required": false,
+                    "_mergeSlotWithChildren": false,
+                    "_proto": "55d30c4c4bdc2db4468b457e"
+                });
             }
         }
         //change spawn% for batteries on bots. the durability is adjusted in a patch.
@@ -372,18 +378,16 @@ class Mod implements IPostDBLoadMod {
         */
         logger.success("BatterySystem has been applied!");
     }
-
-    private pushUnique(target: string[], ...ids: string[]): void {
+    pushUnique(target, ...ids) {
         for (const id of ids) {
             if (!target.includes(id)) {
                 target.push(id);
             }
         }
     }
-
-    private shouldAddBatterySlot(id: string, items: Record<string, any>): boolean {
-        if (config.NoBattery.includes(id)) return false;
-
+    shouldAddBatterySlot(id, items) {
+        if (config.NoBattery.includes(id))
+            return false;
         const batteryParentIds = [
             this.specialScopeID,
             this.nightVisionID,
@@ -397,39 +401,45 @@ class Mod implements IPostDBLoadMod {
             this.lightLaserDesignatorID,
             this.tacticalComboID
         ];
-
-        if (batteryParentIds.includes(id)) return false;
-
+        if (batteryParentIds.includes(id))
+            return false;
         return batteryParentIds.some(parentId => this.isChildOf(id, parentId, items));
     }
-
-    private getBatteryType(id: string, items: Record<string, any>): string {
-        if (config.AA.includes(id)) return this.aaBatteryID;
-        if (config.CR123.includes(id)) return this.cr123BatteryID;
-        if (config.CR2032.includes(id)) return this.cr2032BatteryID;
-        if (config.CR1225.includes(id)) return this.cr2032BatteryID;
-        if (config.CR1632.includes(id)) return this.cr2032BatteryID;
-
-        if (this.isChildOf(id, this.headsetID, items)) return this.aaBatteryID;
-        if (this.isChildOf(id, this.flashlightID, items)) return this.cr123BatteryID;
-        if (this.isChildOf(id, this.lightLaserDesignatorID, items)) return this.cr123BatteryID;
-        if (this.isChildOf(id, this.tacticalComboID, items)) return this.cr123BatteryID;
-        if (this.isChildOf(id, this.specialScopeID, items)) return this.cr123BatteryID;
-        if (this.isChildOf(id, this.thermalVisionID, items)) return this.cr123BatteryID;
-        if (this.isChildOf(id, this.nightVisionID, items)) return this.aaBatteryID;
-
+    getBatteryType(id, items) {
+        if (config.AA.includes(id))
+            return this.aaBatteryID;
+        if (config.CR123.includes(id))
+            return this.cr123BatteryID;
+        if (config.CR2032.includes(id))
+            return this.cr2032BatteryID;
+        if (config.CR1225.includes(id))
+            return this.cr2032BatteryID;
+        if (config.CR1632.includes(id))
+            return this.cr2032BatteryID;
+        if (this.isChildOf(id, this.headsetID, items))
+            return this.aaBatteryID;
+        if (this.isChildOf(id, this.flashlightID, items))
+            return this.cr123BatteryID;
+        if (this.isChildOf(id, this.lightLaserDesignatorID, items))
+            return this.cr123BatteryID;
+        if (this.isChildOf(id, this.tacticalComboID, items))
+            return this.cr123BatteryID;
+        if (this.isChildOf(id, this.specialScopeID, items))
+            return this.cr123BatteryID;
+        if (this.isChildOf(id, this.thermalVisionID, items))
+            return this.cr123BatteryID;
+        if (this.isChildOf(id, this.nightVisionID, items))
+            return this.aaBatteryID;
         return this.cr2032BatteryID;
     }
-
-    private isChildOf(id: string, parentId: string, items: Record<string, any>): boolean {
+    isChildOf(id, parentId, items) {
         let cursor = items[id];
         while (cursor?._parent) {
-            if (cursor._parent === parentId) return true;
+            if (cursor._parent === parentId)
+                return true;
             cursor = items[cursor._parent];
         }
-
         return false;
     }
 }
-
-module.exports = { mod: new Mod() }
+module.exports = { mod: new Mod() };

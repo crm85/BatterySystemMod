@@ -7,10 +7,11 @@ namespace BatterySystem.Configs
 		public static ConfigEntry<bool> EnableMod { get; private set; }
 		public static ConfigEntry<float> DrainMultiplier { get; private set; }
 		public static ConfigEntry<bool> EnableHeadsets { get; private set; }
+		public static ConfigEntry<bool> EnableWhiteFlareTrainSummon { get; private set; }
 		public static ConfigEntry<bool> AutoUnfold { get; private set; }
         public static ConfigEntry<bool> IsRealism { get; private set; }
-        //public static ConfigEntry<int> SpawnDurabilityMin { get; private set; }
-        //public static ConfigEntry<int> SpawnDurabilityMax { get; private set; }
+        public static ConfigEntry<int> SpawnDurabilityMin { get; private set; }
+        public static ConfigEntry<int> SpawnDurabilityMax { get; private set; }
 
         //public static ConfigEntry<float> CompressorMixerVolume { get; private set; }
         //public static ConfigEntry<float> MainMixerVolume { get; private set; }
@@ -31,6 +32,11 @@ namespace BatterySystem.Configs
 					null,
 					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 75 }));
 
+				EnableWhiteFlareTrainSummon = Config.Bind(generalSettings, "White Flare Train Summon", true,
+					new ConfigDescription("Summon map trains when the local player fires a successful white flare.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 25 }));
+
 				DrainMultiplier = Config.Bind(generalSettings, "Battery Drain Multiplier", 1f,
 					new ConfigDescription("Adjust the drain multiplier when NVG is on. By default a battery lasts an hour on NVGs and 2.5 hours on collimators.",
 					new AcceptableValueRange<float>(0f, 10f),
@@ -47,7 +53,7 @@ namespace BatterySystem.Configs
                     new ConfigurationManagerAttributes { IsAdvanced = false, Order = 50 }));
 
 
-                /*SpawnDurabilityMin = Config.Bind(generalSettings, "Spawn Durability Min", 5,
+                SpawnDurabilityMin = Config.Bind(generalSettings, "Spawn Durability Min", 5,
 					new ConfigDescription("Adjust the minimum durability a battery can spawn with on bots.",
 					new AcceptableValueRange<int>(0, 100),
 					new ConfigurationManagerAttributes { IsAdvanced = false, Order = -50 }));
@@ -57,6 +63,7 @@ namespace BatterySystem.Configs
 					new AcceptableValueRange<int>(0, 100),
 					new ConfigurationManagerAttributes { IsAdvanced = false, Order = -100 }));
 				
+				/*
 				CompressorMixerVolume = Config.Bind(generalSettings, "CompressorMixerVolume", -3f,
 					new ConfigDescription("",
 					new AcceptableValueRange<float>(-30f, 10f),
