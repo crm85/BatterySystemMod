@@ -21,6 +21,12 @@ namespace BatterySystem.Configs
 		public static ConfigEntry<float> M18AirdropPlumeScale { get; private set; }
 		public static ConfigEntry<float> M18AirdropSmokeAmount { get; private set; }
 		public static ConfigEntry<float> M18SmokeOccluderRadiusMultiplier { get; private set; }
+		public static ConfigEntry<bool> EnableRetreatSmokeGrenades { get; private set; }
+		public static ConfigEntry<float> RetreatSmokeChance { get; private set; }
+		public static ConfigEntry<float> RetreatSmokeCooldown { get; private set; }
+		public static ConfigEntry<float> RetreatSmokeThrowDistance { get; private set; }
+		public static ConfigEntry<bool> RetreatSmokeAllowEmergencyToss { get; private set; }
+		public static ConfigEntry<bool> RetreatSmokeDebugLogging { get; private set; }
 		public static ConfigEntry<bool> AutoUnfold { get; private set; }
         public static ConfigEntry<bool> IsRealism { get; private set; }
         public static ConfigEntry<int> SpawnDurabilityMin { get; private set; }
@@ -114,6 +120,36 @@ namespace BatterySystem.Configs
 					new ConfigDescription("Extra radius multiplier for invisible AI sight occluders on M18 smoke grenades only.",
 					new AcceptableValueRange<float>(0.5f, 3.5f),
 					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 16 }));
+
+				EnableRetreatSmokeGrenades = Config.Bind(generalSettings, "Enable Retreat Smoke Grenades", true,
+					new ConfigDescription("When SAIN is installed, bots that enter SAIN's Retreat decision will try to throw a smoke grenade before running.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 15 }));
+
+				RetreatSmokeChance = Config.Bind(generalSettings, "Retreat Smoke Chance", 1f,
+					new ConfigDescription("Chance that a bot with smoke will throw one when entering SAIN's Retreat decision.",
+					new AcceptableValueRange<float>(0f, 1f),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 14 }));
+
+				RetreatSmokeCooldown = Config.Bind(generalSettings, "Retreat Smoke Cooldown", 45f,
+					new ConfigDescription("Per-bot cooldown in seconds between forced retreat smoke attempts.",
+					new AcceptableValueRange<float>(5f, 180f),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 13 }));
+
+				RetreatSmokeThrowDistance = Config.Bind(generalSettings, "Retreat Smoke Throw Distance", 7f,
+					new ConfigDescription("Maximum distance in meters for the forced retreat smoke target, placed between the bot and its enemy.",
+					new AcceptableValueRange<float>(2f, 20f),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 12 }));
+
+				RetreatSmokeAllowEmergencyToss = Config.Bind(generalSettings, "Retreat Smoke Allow Emergency Toss", true,
+					new ConfigDescription("If no clean smoke trajectory is found, allow a short low-power toss so the retreat smoke still happens.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 11 }));
+
+				RetreatSmokeDebugLogging = Config.Bind(generalSettings, "Retreat Smoke Debug Logging", false,
+					new ConfigDescription("Log SAIN retreat smoke attempts and rejection reasons.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 10 }));
 
 				DrainMultiplier = Config.Bind(generalSettings, "Battery Drain Multiplier", 1f,
 					new ConfigDescription("Adjust the drain multiplier when NVG is on. By default a battery lasts an hour on NVGs and 2.5 hours on collimators.",

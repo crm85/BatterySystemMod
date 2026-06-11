@@ -20,6 +20,7 @@ namespace BatterySystem
 	 */
 	[BepInPlugin("com.jiro.batterysystem", "BatterySystem", "1.7.0")]
 	[BepInDependency("RealismMod", BepInDependency.DependencyFlags.SoftDependency)]
+	[BepInDependency("me.sol.sain", BepInDependency.DependencyFlags.SoftDependency)]
 	//[BepInDependency("com.AKI.core", "3.8.0")]
 	public class BatterySystemPlugin : BaseUnityPlugin
 	{
@@ -69,6 +70,7 @@ namespace BatterySystem
 			new TrainSummonPatch().Enable();
 			EnablePatchSafe("SmokeGrenadeExplosionPatch", () => new SmokeGrenadeExplosionPatch().Enable());
 			EnablePatchSafe("M18SmokeEffectSuppressionPatch", () => new M18SmokeEffectSuppressionPatch().Enable());
+			EnablePatchSafe("SainRetreatDecisionSmokePatch", SainRetreatDecisionSmokePatch.TryEnable);
             //new FoldableSightPatch().Enable();
 
             InvokeRepeating(nameof(Heartbeat), 1, 1);

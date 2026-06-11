@@ -1,0 +1,35 @@
+namespace SAIN.Editor;
+
+public enum Style
+{
+	selectionList,
+	alert,
+	box,
+	label,
+	textField,
+	textArea,
+	button,
+	toggle,
+	window,
+	botTypeSection,
+	horizontalSlider,
+	horizontalSliderThumb,
+	verticalSlider,
+	verticalSliderThumb,
+	horizontalScrollbar,
+	horizontalScrollbarThumb,
+	horizontalScrollbarLeftButton,
+	horizontalScrollbarRightButton,
+	verticalScrollbar,
+	verticalScrollbarThumb,
+	verticalScrollbarUpButton,
+	verticalScrollbarDownButton,
+	scrollView,
+	list,
+	tooltip,
+	blankbox,
+	group,
+	selectionGrid,
+	dragBar,
+	botTypeGrid
+}

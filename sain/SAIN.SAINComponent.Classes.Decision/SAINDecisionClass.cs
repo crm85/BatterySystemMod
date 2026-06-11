@@ -1,0 +1,96 @@
+using SAIN.Components;
+
+namespace SAIN.SAINComponent.Classes.Decision;
+
+public class SAINDecisionClass : BotComponentClassBase
+{
+	public bool HasDecision => DecisionManager.HasDecision;
+
+	public ECombatDecision CurrentCombatDecision => DecisionManager.CurrentCombatDecision;
+
+	public ECombatDecision PreviousCombatDecision => DecisionManager.PreviousCombatDecision;
+
+	public ESquadDecision CurrentSquadDecision => DecisionManager.CurrentSquadDecision;
+
+	public ESquadDecision PreviousSquadDecision => DecisionManager.PreviousSquadDecision;
+
+	public ESelfDecision CurrentSelfDecision => DecisionManager.CurrentSelfDecision;
+
+	public ESelfDecision PreviousSelfDecision => DecisionManager.PreviousSelfDecision;
+
+	public float ChangeDecisionTime => DecisionManager.ChangeDecisionTime;
+
+	public float TimeSinceChangeDecision => DecisionManager.TimeSinceChangeDecision;
+
+	public bool RunningToCover
+	{
+		get
+		{
+			ECombatDecision currentCombatDecision = CurrentCombatDecision;
+			ECombatDecision eCombatDecision = currentCombatDecision;
+			if ((uint)(eCombatDecision - 1) <= 1u || eCombatDecision == ECombatDecision.RunAway)
+			{
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public bool IsSearching => CurrentCombatDecision == ECombatDecision.Search || CurrentSquadDecision == ESquadDecision.Search || CurrentSquadDecision == ESquadDecision.GroupSearch;
+
+	public BotDecisionManager DecisionManager { get; }
+
+	public DogFightDecisionClass DogFightDecision { get; }
+
+	public SelfActionDecisionClass SelfActionDecisions { get; }
+
+	public EnemyDecisionClass EnemyDecisions { get; }
+
+	public SquadDecisionClass SquadDecisions { get; }
+
+	public SAINDecisionClass(BotComponent bot)
+		: base(bot)
+	{
+		base.TickRequirement = ESAINTickState.OnlyBotActive;
+		DecisionManager = new BotDecisionManager(this);
+		SelfActionDecisions = new SelfActionDecisionClass(bot);
+		EnemyDecisions = new EnemyDecisionClass(bot);
+		SquadDecisions = new SquadDecisionClass(bot);
+		DogFightDecision = new DogFightDecisionClass(bot);
+	}
+
+	public override void Init()
+	{
+		DecisionManager.Init();
+		SelfActionDecisions.Init();
+		EnemyDecisions.Init();
+		SquadDecisions.Init();
+		DogFightDecision.Init();
+		base.Init();
+	}
+
+	public override void ManualUpdate()
+	{
+		DecisionManager.ManualUpdate();
+		SelfActionDecisions.ManualUpdate();
+		EnemyDecisions.ManualUpdate();
+		SquadDecisions.ManualUpdate();
+		DogFightDecision.ManualUpdate();
+		base.ManualUpdate();
+	}
+
+	public override void Dispose()
+	{
+		DecisionManager.Dispose();
+		SelfActionDecisions.Dispose();
+		EnemyDecisions.Dispose();
+		SquadDecisions.Dispose();
+		DogFightDecision?.Dispose();
+		base.Dispose();
+	}
+
+	public void ResetDecisions(bool active)
+	{
+		DecisionManager.ResetDecisions(active);
+	}
+}
