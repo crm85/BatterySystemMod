@@ -34,10 +34,11 @@ namespace BatterySystem
 
         public static void SetHeadWearComponents()
         {
-            NightVisionItem = BatterySystemPlugin.localInventory.Equipment.GetSlot(EquipmentSlot.Headwear).Items?.FirstOrDefault(); // default null else headwear
-            _nvgDevice = NightVisionItem?.GetItemComponentsInChildren<NightVisionComponent>().FirstOrDefault(); //default null else nvg item
-            _thermalDevice = NightVisionItem?.GetItemComponentsInChildren<ThermalVisionComponent>().FirstOrDefault(); //default null else thermal item
-            NightVisionBattery = GetHeadwearSight()?.GetItemComponentsInChildren<ResourceComponent>(false).FirstOrDefault(); //default null else resource
+            Item headwearItem = BatterySystem.GetHeadwearSlot()?.ContainedItem;
+            _nvgDevice = headwearItem?.GetItemComponentsInChildren<NightVisionComponent>().FirstOrDefault(); //default null else nvg item
+            _thermalDevice = headwearItem?.GetItemComponentsInChildren<ThermalVisionComponent>().FirstOrDefault(); //default null else thermal item
+            NightVisionItem = GetHeadwearSight();
+            NightVisionBattery = BatterySystem.GetBatteryResource(NightVisionItem); //default null else resource
 
             CheckHeadWearIfDraining();
             BatterySystem.UpdateBatteryDictionary();
@@ -45,10 +46,10 @@ namespace BatterySystem
 
         public static void TrackBatteries()
         {
-            if (GetHeadwearSight() == null) return;
-            if (BatterySystemPlugin.batteryDictionary.ContainsKey(GetHeadwearSight())) return; // headwear
+            Item headwearSight = GetHeadwearSight();
+            if (headwearSight == null) return;
             
-            BatterySystemPlugin.batteryDictionary.Add(GetHeadwearSight(), _drainingNightVisionBattery);
+            BatterySystem.TrySetBatteryDrain(headwearSight, _drainingNightVisionBattery, GetDrainMultiplier(headwearSight));
         }
 
         public static Item GetHeadwearSight() // returns the special device goggles that are equipped
@@ -75,13 +76,21 @@ namespace BatterySystem
 
             _drainingNightVisionBattery = nvgShouldRun || thermalShouldRun;
 
-            if (NightVisionBattery != null && BatterySystemPlugin.batteryDictionary.ContainsKey(GetHeadwearSight()))
-                BatterySystemPlugin.batteryDictionary[GetHeadwearSight()] = _drainingNightVisionBattery;
+            Item headwearSight = GetHeadwearSight();
+            BatterySystem.TrySetBatteryDrain(headwearSight, _drainingNightVisionBattery, GetDrainMultiplier(headwearSight));
 
             if (CameraClass.Instance?.NightVision != null)
                 CameraClass.Instance.NightVision.On = nvgShouldRun;
             if (CameraClass.Instance?.ThermalVision != null)
                 CameraClass.Instance.ThermalVision.On = thermalShouldRun;
+        }
+
+        private static float GetDrainMultiplier(Item item)
+        {
+            if (item != null && deviceDrainMultiplier.TryGetValue(item.StringTemplateId, out float drainMultiplier))
+                return drainMultiplier;
+
+            return 1f;
         }
     }
 

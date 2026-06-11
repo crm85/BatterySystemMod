@@ -1,4 +1,17 @@
 {
+  "WeaponDurability": {
+    "Enabled": true,
+    "ValuePercentileLow": 0.1,
+    "ValuePercentileHigh": 0.9,
+    "WorldLowValueMin": 35,
+    "WorldLowValueMax": 95,
+    "WorldHighValueMin": 80,
+    "WorldHighValueMax": 98,
+    "TraderLowValueMin": 75,
+    "TraderLowValueMax": 99,
+    "TraderHighValueMin": 90,
+    "TraderHighValueMax": 99
+  },
   "CR123": [
     "5c0558060db834001b735271",
     "5c066e3a0db834001b7353f0",
@@ -54,6 +67,8 @@
     "5947db3f86f77447880cf76f"
   ],
   "AA": [
+    "590a3efd86f77437d351a25b",
+    "5672cb724bdc2dc2088b456b",
     "5c0696830db834001d23f5da",
     "57235b6f24597759bf5a30f1",
     "5c110624d174af029e69734c",

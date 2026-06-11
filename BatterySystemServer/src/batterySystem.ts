@@ -10,10 +10,14 @@ import { TraderPurchaseData } from "@spt/models/eft/profile/ISptProfile";
 
 class Mod implements IPostDBLoadMod {
     private batteryType = "";
+    private weaponBaseValues: Record<string, number> = {};
+    private weaponValueLow = 0;
+    private weaponValueHigh = 1;
     private readonly aaBatteryID = "5672cb124bdc2d1a0f8b4568";
     private readonly cr2032BatteryID = "5672cb304bdc2dc2088b456a";
     private readonly cr123BatteryID = "590a358486f77429692b2790";
     private readonly carBatteryID = "5733279d245977289b77ec24";
+    private readonly weaponID = "5422acb9af1c889c16000029";
     private readonly specialScopeID = "55818aeb4bdc2ddc698b456a";
     private readonly nightVisionID = "5a2c3a9486f774688b05e574";
     private readonly thermalVisionID = "5d21f59b6dbe99052b54ef83";
@@ -25,15 +29,18 @@ class Mod implements IPostDBLoadMod {
     private readonly flashlightID = "55818b084bdc2d5b648b4571";
     private readonly lightLaserDesignatorID = "55818b0e4bdc2dde698b456e";
     private readonly tacticalComboID = "55818b164bdc2ddc698b456c";
+    private readonly electronicsID = "57864a66245977548f04a81f";
+    private readonly gearModID = "55802f3e4bdc2de7118b4584";
 
     public postDBLoad(container: DependencyContainer): void {
         //const CustomItem = container.resolve<CustomItemService>("CustomItemService");
         const logger = container.resolve<ILogger>("WinstonLogger");
         const db = container.resolve<DatabaseServer>("DatabaseServer");
-        const locales = Object.values(db.getTables().locales.global) as Record<string, string>[];
-        const botDB = db.getTables().bots.types;
-        const items = db.getTables().templates.items;
-        const hideoutProduction = db.getTables().hideout.production;
+        const tables = db.getTables();
+        const locales = Object.values(tables.locales.global) as Record<string, string>[];
+        const botDB = tables.bots.types;
+        const items = tables.templates.items;
+        const hideoutProduction = tables.hideout.production;
         const aaBatteryID = this.aaBatteryID;
         const dBatteryID = this.cr2032BatteryID;
         const rchblBatteryID = this.cr123BatteryID;
@@ -85,6 +92,10 @@ class Mod implements IPostDBLoadMod {
             if (this.shouldAddBatterySlot(id, items)) {
 
                 this.batteryType = this.getBatteryType(id, items);
+                if (this.hasConfiguredBatteryType(id)) {
+                    this.prepareConfiguredBatterySlotItem(id, items);
+                }
+
                 for (const locale of locales) { // Item description now includes the battery type
                     const oldDescription = locale[`${id} Description`] ?? "";
                     const batteryName = locale[`${this.batteryType} Name`] ?? this.batteryType;
@@ -93,9 +104,11 @@ class Mod implements IPostDBLoadMod {
                         : "Uses " + batteryName + "\n\n" + oldDescription;
                     locale[`${id} Description`] = newDescription;
                 }
-                if (items[id]._props.Slots.some(slot => slot._name === "mod_equipment")) continue;
 
-                items[id]._props.Slots.push(
+                const slots = items[id]._props.Slots ??= [];
+                if (slots.some(slot => slot._name === "mod_equipment")) continue;
+
+                slots.push(
                     {
                         "_name": "mod_equipment",
                         "_id": "id_" + id.toLowerCase(),
@@ -127,6 +140,14 @@ class Mod implements IPostDBLoadMod {
                 botDB[bot].chances.weaponMods.mod_equipment = 50;
             }
         }
+
+        if (config.WeaponDurability?.Enabled !== false) {
+            this.configureWeaponDurability(items, tables.templates.handbook);
+            const traderWeaponCount = this.applyTraderWeaponDurability(tables.traders, items);
+            this.patchLocationLootGenerator(container, items, logger);
+            logger.success(`BatterySystem weapon durability has been applied to ${traderWeaponCount} trader weapons!`);
+        }
+
         //Jaeger trade for cr2032
         /*
         db.getTables().traders["5c0647fdd443bc2504c2d371"].assort.items.push({
@@ -381,26 +402,258 @@ class Mod implements IPostDBLoadMod {
         }
     }
 
+    private configureWeaponDurability(items: Record<string, any>, handbook: any): void {
+        this.weaponBaseValues = {};
+
+        for (const handbookItem of handbook?.Items ?? []) {
+            if (typeof handbookItem?.Id === "string" && typeof handbookItem?.Price === "number") {
+                this.weaponBaseValues[handbookItem.Id] = handbookItem.Price;
+            }
+        }
+
+        const weaponValues: number[] = [];
+        for (const id in items) {
+            if (!this.isWeaponTemplate(id, items)) continue;
+
+            const templateValue = Number(items[id]?._props?.CreditsPrice ?? 0);
+            if (!this.weaponBaseValues[id] && templateValue > 0) {
+                this.weaponBaseValues[id] = templateValue;
+            }
+
+            const value = this.weaponBaseValues[id] ?? 0;
+            if (value > 0) {
+                weaponValues.push(value);
+            }
+        }
+
+        weaponValues.sort((a, b) => a - b);
+        this.weaponValueLow = this.percentile(
+            weaponValues,
+            this.normalizePercentile(config.WeaponDurability?.ValuePercentileLow, 0.1)
+        );
+        this.weaponValueHigh = this.percentile(
+            weaponValues,
+            this.normalizePercentile(config.WeaponDurability?.ValuePercentileHigh, 0.9)
+        );
+
+        if (this.weaponValueHigh <= this.weaponValueLow) {
+            this.weaponValueHigh = this.weaponValueLow + 1;
+        }
+    }
+
+    private applyTraderWeaponDurability(traders: Record<string, any>, items: Record<string, any>): number {
+        let changed = 0;
+
+        for (const traderId in traders) {
+            const assortItems = traders[traderId]?.assort?.items;
+            if (!Array.isArray(assortItems)) continue;
+
+            for (const assortItem of assortItems) {
+                if (assortItem?.parentId !== "hideout" || assortItem?.slotId !== "hideout") continue;
+
+                if (this.applyWeaponDurability(assortItem, items, "trader")) {
+                    changed++;
+                }
+            }
+        }
+
+        return changed;
+    }
+
+    private patchLocationLootGenerator(container: DependencyContainer, items: Record<string, any>, logger: ILogger): void {
+        try {
+            const locationLootGenerator = container.resolve<any>("LocationLootGenerator");
+            const prototype = Object.getPrototypeOf(locationLootGenerator);
+            if (prototype.__batterySystemWeaponDurabilityPatched) return;
+
+            const mod = this;
+            const originalGenerateDynamicLoot = prototype.generateDynamicLoot;
+            prototype.generateDynamicLoot = function (...args: any[]) {
+                const loot = originalGenerateDynamicLoot.apply(this, args);
+                mod.applyWorldWeaponDurabilityToLootTemplates(loot, items);
+                return loot;
+            };
+
+            const originalGenerateStaticContainers = prototype.generateStaticContainers;
+            prototype.generateStaticContainers = function (...args: any[]) {
+                const loot = originalGenerateStaticContainers.apply(this, args);
+                mod.applyWorldWeaponDurabilityToLootTemplates(loot, items);
+                return loot;
+            };
+
+            Object.defineProperty(prototype, "__batterySystemWeaponDurabilityPatched", { value: true });
+        } catch (error) {
+            const warning = (logger as any).warning ?? (logger as any).error;
+            warning.call(logger, `BatterySystem could not patch world weapon durability: ${error?.message ?? error}`);
+        }
+    }
+
+    private applyWorldWeaponDurabilityToLootTemplates(lootTemplates: any[], items: Record<string, any>): number {
+        let changed = 0;
+        if (!Array.isArray(lootTemplates)) return changed;
+
+        for (const lootTemplate of lootTemplates) {
+            changed += this.applyWorldWeaponDurabilityToItems(lootTemplate?.Items, lootTemplate?.Root, items);
+        }
+
+        return changed;
+    }
+
+    private applyWorldWeaponDurabilityToItems(itemList: any[], rootId: string | undefined, items: Record<string, any>): number {
+        let changed = 0;
+        if (!Array.isArray(itemList)) return changed;
+
+        for (const item of itemList) {
+            if (!this.isWeaponTemplate(item?._tpl, items)) continue;
+            if (item._id !== rootId && (item.slotId || this.hasWeaponParent(item, itemList, items))) continue;
+
+            if (this.applyWeaponDurability(item, items, "world")) {
+                changed++;
+            }
+        }
+
+        return changed;
+    }
+
+    private applyWeaponDurability(item: any, items: Record<string, any>, source: "world" | "trader"): boolean {
+        const template = items[item?._tpl];
+        if (!template || !this.isWeaponTemplate(item._tpl, items)) return false;
+
+        const templateMaxDurability = Number(template._props?.MaxDurability ?? template._props?.Durability ?? 0);
+        if (templateMaxDurability <= 0) return false;
+
+        const range = this.getDurabilityRange(item._tpl, source);
+        const chosenPercent = this.randomInt(range.min, range.max);
+        const chosenMaxDurability = Math.max(1, Math.min(templateMaxDurability, Math.round(templateMaxDurability * chosenPercent / 100)));
+
+        item.upd = item.upd ?? {};
+        item.upd.Repairable = {
+            Durability: chosenMaxDurability,
+            MaxDurability: chosenMaxDurability
+        };
+
+        return true;
+    }
+
+    private getDurabilityRange(itemTpl: string, source: "world" | "trader"): { min: number; max: number } {
+        const settings = (config.WeaponDurability ?? {}) as Record<string, number>;
+        const value = this.weaponBaseValues[itemTpl] ?? this.weaponValueLow;
+        const valueFactor = this.clamp((value - this.weaponValueLow) / (this.weaponValueHigh - this.weaponValueLow), 0, 1);
+
+        const lowMin = source === "trader" ? settings.TraderLowValueMin : settings.WorldLowValueMin;
+        const lowMax = source === "trader" ? settings.TraderLowValueMax : settings.WorldLowValueMax;
+        const highMin = source === "trader" ? settings.TraderHighValueMin : settings.WorldHighValueMin;
+        const highMax = source === "trader" ? settings.TraderHighValueMax : settings.WorldHighValueMax;
+
+        const min = Math.round(this.lerp(this.clampPercent(lowMin, 35), this.clampPercent(highMin, 80), valueFactor));
+        const max = Math.round(this.lerp(this.clampPercent(lowMax, 95), this.clampPercent(highMax, 98), valueFactor));
+
+        return {
+            min: Math.min(min, max),
+            max: Math.max(min, max)
+        };
+    }
+
+    private hasWeaponParent(item: any, itemList: any[], items: Record<string, any>): boolean {
+        let parent = itemList.find((candidate) => candidate?._id === item?.parentId);
+        while (parent) {
+            if (this.isWeaponTemplate(parent._tpl, items)) return true;
+            parent = itemList.find((candidate) => candidate?._id === parent.parentId);
+        }
+
+        return false;
+    }
+
+    private isWeaponTemplate(id: string, items: Record<string, any>): boolean {
+        return id === this.weaponID || this.isChildOf(id, this.weaponID, items);
+    }
+
+    private percentile(sortedValues: number[], percentile: number): number {
+        if (sortedValues.length === 0) return 0;
+
+        const index = Math.round((sortedValues.length - 1) * percentile);
+        return sortedValues[this.clamp(index, 0, sortedValues.length - 1)];
+    }
+
+    private normalizePercentile(value: number | undefined, fallback: number): number {
+        if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+
+        return this.clamp(value > 1 ? value / 100 : value, 0, 1);
+    }
+
+    private clampPercent(value: number | undefined, fallback: number): number {
+        if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+
+        return this.clamp(value, 0, 100);
+    }
+
+    private clamp(value: number, min: number, max: number): number {
+        return Math.min(max, Math.max(min, value));
+    }
+
+    private lerp(start: number, end: number, value: number): number {
+        return start + (end - start) * value;
+    }
+
+    private randomInt(min: number, max: number): number {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
     private shouldAddBatterySlot(id: string, items: Record<string, any>): boolean {
         if (config.NoBattery.includes(id)) return false;
+        if (this.hasConfiguredBatteryType(id)) return true;
 
-        const batteryParentIds = [
-            this.specialScopeID,
-            this.nightVisionID,
-            this.thermalVisionID,
-            this.collimatorID,
-            this.compactCollimatorID,
-            this.assaultScopeID,
-            this.opticScopeID,
-            this.headsetID,
-            this.flashlightID,
-            this.lightLaserDesignatorID,
-            this.tacticalComboID
-        ];
+        if (this.isChildOf(id, this.nightVisionID, items)) return true;
+        if (this.isChildOf(id, this.thermalVisionID, items)) return true;
+        if (this.isChildOf(id, this.specialScopeID, items)) return this.isPoweredSight(id, items);
+        if (this.isChildOf(id, this.collimatorID, items)) return this.isPoweredSight(id, items);
+        if (this.isChildOf(id, this.compactCollimatorID, items)) return this.isPoweredSight(id, items);
+        if (this.isChildOf(id, this.assaultScopeID, items)) return this.isPoweredSight(id, items);
+        if (this.isChildOf(id, this.opticScopeID, items)) return this.isPoweredSight(id, items);
+        if (this.isChildOf(id, this.headsetID, items)) return true;
+        if (this.isChildOf(id, this.flashlightID, items)) return true;
+        if (this.isChildOf(id, this.lightLaserDesignatorID, items)) return true;
+        if (this.isChildOf(id, this.tacticalComboID, items)) return true;
 
-        if (batteryParentIds.includes(id)) return false;
+        return false;
+    }
 
-        return batteryParentIds.some(parentId => this.isChildOf(id, parentId, items));
+    private hasConfiguredBatteryType(id: string): boolean {
+        return config.AA.includes(id)
+            || config.CR123.includes(id)
+            || config.CR2032.includes(id)
+            || config.CR1225.includes(id)
+            || config.CR1632.includes(id);
+    }
+
+    private prepareConfiguredBatterySlotItem(id: string, items: Record<string, any>): void {
+        const item = items[id];
+        const props = item?._props;
+        if (!props) return;
+
+        if (this.shouldUseCompoundBatterySlotParent(id, items)) {
+            item._parent = this.gearModID;
+            delete props.Grids;
+            props.HideEntrails = false;
+            props.MergesWithChildren = false;
+        }
+
+        props.Slots ??= [];
+        props.CanPutIntoDuringTheRaid ??= true;
+        props.ForbidMissingVitalParts ??= false;
+        props.ForbidNonEmptyContainers ??= false;
+        props.RaidModdable ??= true;
+        props.ToolModdable ??= true;
+    }
+
+    private shouldUseCompoundBatterySlotParent(id: string, items: Record<string, any>): boolean {
+        const item = items[id];
+        const props = item?._props;
+        if (!props) return false;
+
+        return this.hasConfiguredBatteryType(id)
+            && this.isChildOf(id, this.electronicsID, items)
+            && !Object.prototype.hasOwnProperty.call(props, "Slots");
     }
 
     private getBatteryType(id: string, items: Record<string, any>): string {
@@ -419,6 +672,14 @@ class Mod implements IPostDBLoadMod {
         if (this.isChildOf(id, this.nightVisionID, items)) return this.aaBatteryID;
 
         return this.cr2032BatteryID;
+    }
+
+    private isPoweredSight(id: string, items: Record<string, any>): boolean {
+        const sightModType = items[id]?._props?.sightModType;
+
+        return sightModType === "holo"
+            || sightModType === "reflex"
+            || sightModType === "hybrid";
     }
 
     private isChildOf(id: string, parentId: string, items: Record<string, any>): boolean {

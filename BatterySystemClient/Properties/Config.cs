@@ -7,6 +7,10 @@ namespace BatterySystem.Configs
 		public static ConfigEntry<bool> EnableMod { get; private set; }
 		public static ConfigEntry<float> DrainMultiplier { get; private set; }
 		public static ConfigEntry<bool> EnableHeadsets { get; private set; }
+		public static ConfigEntry<bool> EnableQuestPresenceDetector { get; private set; }
+		public static ConfigEntry<bool> QuestPresenceShowArrow { get; private set; }
+		public static ConfigEntry<float> QuestPresenceAreaSize { get; private set; }
+		public static ConfigEntry<bool> QuestPresenceShowNotification { get; private set; }
 		public static ConfigEntry<bool> EnableWhiteFlareTrainSummon { get; private set; }
 		public static ConfigEntry<bool> AutoUnfold { get; private set; }
         public static ConfigEntry<bool> IsRealism { get; private set; }
@@ -31,6 +35,26 @@ namespace BatterySystem.Configs
 					new ConfigDescription("Enable BatterySystem for headsets. Disable this if your headsets behave weirdly with other mods such as Realism. Requires restart.",
 					null,
 					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 75 }));
+
+				EnableQuestPresenceDetector = Config.Bind(generalSettings, "Enable Quest Presence Detector", true,
+					new ConfigDescription("Show a proximity indicator when you are near loose quest items. Requires restart.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 70 }));
+
+				QuestPresenceShowArrow = Config.Bind(generalSettings, "Quest Presence Show Arrow", true,
+					new ConfigDescription("Show an arrow pointing toward nearby loose quest items.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 69 }));
+
+				QuestPresenceAreaSize = Config.Bind(generalSettings, "Quest Presence Area Size", 5f,
+					new ConfigDescription("The detection radius around loose quest items in meters. Cannot be changed mid-raid.",
+					new AcceptableValueRange<float>(5f, 25f),
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 68 }));
+
+				QuestPresenceShowNotification = Config.Bind(generalSettings, "Quest Presence Show Notification", true,
+					new ConfigDescription("Show a notification when entering a loose quest item's detection area.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 67 }));
 
 				EnableWhiteFlareTrainSummon = Config.Bind(generalSettings, "White Flare Train Summon", true,
 					new ConfigDescription("Summon map trains when the local player fires a successful white flare.",

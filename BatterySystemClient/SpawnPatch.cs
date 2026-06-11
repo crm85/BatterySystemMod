@@ -32,7 +32,9 @@ namespace BatterySystem
 
 			if (__instance.IsYourPlayer)
 			{
-				BatterySystemPlugin.localInventory = __instance.InventoryController.Inventory; //Player Inventory
+                BatterySystemPlugin.localInventory = __instance.InventoryController.Inventory; //Player Inventory
+                BatterySystemPlugin.batteryDictionary.Clear();
+                BatterySystemPlugin.batteryDrainMultipliers.Clear();
                 SightBatteries.sightMods.Clear(); // remove old sight entries that were saved from previous raid
                 TacticalDeviceBatteries.lightMods.Clear(); // same for tactical devices
                 HeadsetBatteries.SetEarPieceComponents();

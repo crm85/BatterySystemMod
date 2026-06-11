@@ -27,9 +27,8 @@ namespace BatterySystem
         {
             if (!BatterySystemConfig.EnableHeadsets.Value) return;
             if (headsetItem == null) return;
-            if (BatterySystemPlugin.batteryDictionary.ContainsKey(headsetItem)) return;
 
-            BatterySystemPlugin.batteryDictionary.Add(headsetItem, _drainingEarPieceBattery);
+            BatterySystem.TrySetBatteryDrain(headsetItem, _drainingEarPieceBattery);
         }
         
         public static void SetEarPieceComponents()
@@ -37,7 +36,7 @@ namespace BatterySystem
             if (BatterySystemConfig.EnableHeadsets.Value)
             {
                 headsetItem = GetEarpiece();
-                headsetBattery = headsetItem?.GetItemComponentsInChildren<ResourceComponent>(false).FirstOrDefault();
+                headsetBattery = BatterySystem.GetBatteryResource(headsetItem);
                 CheckEarPieceIfDraining();
                 BatterySystem.UpdateBatteryDictionary();
             }
@@ -48,8 +47,10 @@ namespace BatterySystem
             _drainingEarPieceBattery = false;
             if (!BatterySystemConfig.EnableHeadsets.Value) return;
 
+            bool hasChargedBattery = headsetBattery != null && headsetBattery.Value > 0f;
+
             //headset has charged battery installed
-            if (headsetBattery != null && headsetBattery.Value > 0)
+            if (hasChargedBattery)
             {
                 _drainingEarPieceBattery = true;
                 if (!TrySetRealismHeadsetState(true))
@@ -74,8 +75,20 @@ namespace BatterySystem
                 _drainingEarPieceBattery = false;
             }
 
-            if (headsetItem != null && BatterySystemPlugin.batteryDictionary.ContainsKey(headsetItem))
-                BatterySystemPlugin.batteryDictionary[headsetItem] = _drainingEarPieceBattery;
+            BatterySystem.TrySetBatteryDrain(headsetItem, _drainingEarPieceBattery);
+        }
+
+        public static void EnforceRealismHeadsetState()
+        {
+            if (!BatterySystemConfig.EnableHeadsets.Value) return;
+            if (!HasRealismDeafenController()) return;
+
+            headsetItem = GetEarpiece();
+            headsetBattery = BatterySystem.GetBatteryResource(headsetItem);
+            _drainingEarPieceBattery = headsetBattery != null && headsetBattery.Value > 0f;
+
+            BatterySystem.TrySetBatteryDrain(headsetItem, _drainingEarPieceBattery);
+            TrySetRealismHeadsetState(_drainingEarPieceBattery);
         }
 
         public static void CaptureVanillaAudioDefaults()
@@ -100,7 +113,10 @@ namespace BatterySystem
             Type deafenControllerType = GetRealismDeafenControllerType();
             if (deafenControllerType == null) return false;
 
-            AccessTools.Property(deafenControllerType, "HasHeadSet")?.SetValue(null, hasPoweredHeadset, null);
+            PropertyInfo hasHeadSetProperty = AccessTools.Property(deafenControllerType, "HasHeadSet");
+            if (hasHeadSetProperty == null) return false;
+
+            hasHeadSetProperty.SetValue(null, hasPoweredHeadset, null);
             if (!hasPoweredHeadset)
             {
                 AccessTools.Property(deafenControllerType, "HeadSetGain")?.SetValue(null, GetRealismMinGain(deafenControllerType), null);
@@ -108,6 +124,11 @@ namespace BatterySystem
             }
 
             return true;
+        }
+
+        public static bool HasRealismDeafenController()
+        {
+            return GetRealismDeafenControllerType() != null;
         }
 
         private static Type GetRealismDeafenControllerType()
@@ -178,6 +199,42 @@ namespace BatterySystem
             
             HeadsetBatteries.CaptureVanillaAudioDefaults();
             HeadsetBatteries.SetEarPieceComponents();
+        }
+    }
+
+    public class RealismHeadsetGainPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            Type headsetGainControllerType = Type.GetType("RealismMod.HeadsetGainController, RealismMod", false);
+            return AccessTools.Method(headsetGainControllerType, "AdjustHeadsetVolume");
+        }
+
+        [PatchPrefix]
+        [HarmonyPriority(Priority.First)]
+        public static void PatchPrefix()
+        {
+            if (!BatterySystemPlugin.InGame()) return;
+
+            HeadsetBatteries.EnforceRealismHeadsetState();
+        }
+    }
+
+    public class RealismDeafeningPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            Type deafenControllerType = Type.GetType("RealismMod.DeafenController, RealismMod", false);
+            return AccessTools.Method(deafenControllerType, "DoDeafening");
+        }
+
+        [PatchPrefix]
+        [HarmonyPriority(Priority.First)]
+        public static void PatchPrefix()
+        {
+            if (!BatterySystemPlugin.InGame()) return;
+
+            HeadsetBatteries.EnforceRealismHeadsetState();
         }
     }
 

@@ -18,6 +18,7 @@ namespace BatterySystem
 	 * battery recharger - idea by Props
 	 */
 	[BepInPlugin("com.jiro.batterysystem", "BatterySystem", "1.7.0")]
+	[BepInDependency("RealismMod", BepInDependency.DependencyFlags.SoftDependency)]
 	//[BepInDependency("com.AKI.core", "3.8.0")]
 	public class BatterySystemPlugin : BaseUnityPlugin
 	{
@@ -26,6 +27,7 @@ namespace BatterySystem
 		public const string CR123BatteryId = "590a358486f77429692b2790";
 		public const string CarBatteryId = "5733279d245977289b77ec24";
         public static Dictionary<Item, bool> batteryDictionary = new Dictionary<Item, bool>();
+        public static Dictionary<Item, float> batteryDrainMultipliers = new Dictionary<Item, float>();
         //resource drain all batteries that are on // using dictionary to help and sync draining batteries
 
         public static Inventory localInventory;
@@ -35,16 +37,34 @@ namespace BatterySystem
 			BatterySystemConfig.Init(Config);
 			if (!BatterySystemConfig.EnableMod.Value) return;
 
+			if (BatterySystemConfig.EnableQuestPresenceDetector.Value)
+			{
+				QuestPresenceDetector.LoadInterfaceBundle(Logger);
+				new QuestPresenceLootItemPatch().Enable();
+				new QuestPresencePlayerPatch().Enable();
+			}
 			new SpawnPatch().Enable();
 			new AimSightPatch().Enable();
 			if (BatterySystemConfig.EnableHeadsets.Value)
+			{
 				new UpdatePhonesPatch().Enable();
+				if (HeadsetBatteries.HasRealismDeafenController())
+				{
+					new RealismHeadsetGainPatch().Enable();
+					new RealismDeafeningPatch().Enable();
+				}
+			}
+			if (RealismAnalyzerBatteries.HasRealismAnalyzerSupport())
+			{
+				new RealismCheckForDevicesPatch().Enable();
+				new RealismGasAnalyserAudioPatch().Enable();
+				new RealismGeigerAudioPatch().Enable();
+			}
 			new ApplyItemPatch().Enable();
 			new SightDevicePatch().Enable();
 			new TacticalDevicePatch().Enable();
 			new NvgHeadWearPatch().Enable();
 			new ThermalHeadWearPatch().Enable();
-			new BatteryResourceAttributePatch().Enable();
 			new TrainSummonPatch().Enable();
             //new FoldableSightPatch().Enable();
 
@@ -54,7 +74,7 @@ namespace BatterySystem
 		//Gets called every second
 		private void Heartbeat()
 		{
-			HeadsetBatteries.CheckEarPieceIfDraining();
+			BatterySystem.RefreshBatteryDrainStates();
 			DrainBatteries();
 		}
 
@@ -63,26 +83,24 @@ namespace BatterySystem
 			if (!InGame()) return;
 
 			//here?
-			var batteryKeys = batteryDictionary.Keys.ToArray();
-            foreach (Item batteryItem in batteryKeys)
+			var poweredItems = batteryDictionary.Keys.ToArray();
+            foreach (Item poweredItem in poweredItems)
 			{
 				//Is draining disabled on this battery?
-				if (!batteryDictionary[batteryItem]) continue;
+				if (!batteryDictionary[poweredItem]) continue;
 				
 				//for sights, earpiece and tactical devices
-				if (batteryItem.GetItemComponentsInChildren<ResourceComponent>(false).FirstOrDefault() is ResourceComponent batteryResource)
+				if (BatterySystem.GetBatteryResource(poweredItem) is ResourceComponent batteryResource)
 				{
-					batteryResource.Value -= 1 / 100f * BatterySystemConfig.DrainMultiplier.Value; //2 hr
+					float drainMultiplier = batteryDrainMultipliers.TryGetValue(poweredItem, out float configuredMultiplier)
+						? configuredMultiplier
+						: 1f;
+					BatterySystem.DrainBattery(poweredItem, drainMultiplier);
 
 					//when battery has no charge left
-					if (batteryResource.Value < 0f)
+					if (batteryResource.Value <= 0f)
 					{
-						batteryResource.Value = 0f;
-						
-						HeadsetBatteries.CheckEarPieceIfDraining();
-						NightVisionBatteries.CheckHeadWearIfDraining();
-						TacticalDeviceBatteries.CheckDeviceIfDraining();
-						SightBatteries.CheckSightIfDraining();
+						BatterySystem.RefreshBatteryDrainStates();
 					}
 				}
 			}

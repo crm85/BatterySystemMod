@@ -23,9 +23,11 @@ namespace BatterySystem
             {
                 if (sightController?.SightMod?.Item == null) continue;
                 if (!BatterySystem.IsInSlot(sightController.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot)) continue;
-                if (!BatterySystemPlugin.batteryDictionary.ContainsKey(sightController.SightMod.Item))
-                    BatterySystemPlugin.batteryDictionary.Add(sightController.SightMod.Item, sightMods[sightController]?.Value > 0);
+
+                BatterySystem.TrySetBatteryDrain(sightController.SightMod.Item, sightMods[sightController]?.Value > 0);
             }
+
+            TrackSightComponents(Singleton<GameWorld>.Instance?.MainPlayer?.ActiveSlot);
         }
 
         public static void SetSightComponents(SightModVisualControllers sightInstance, bool updateState = true)
@@ -45,7 +47,7 @@ namespace BatterySystem
             {
                 // if sight is already in dictionary, dont add it
                 if (!sightMods.Keys.Any(key => key?.SightMod?.Item == sightInstance.SightMod.Item))
-                    sightMods.Add(sightInstance, sightInstance.SightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault());
+                    sightMods.Add(sightInstance, BatterySystem.GetBatteryResource(sightInstance.SightMod.Item));
             }
 
             if (!updateState) return;
@@ -66,12 +68,11 @@ namespace BatterySystem
                     continue;
                 }
                 
-                sightMods[key] = key.SightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault();
+                sightMods[key] = BatterySystem.GetBatteryResource(key.SightMod.Item);
                 _drainingSightBattery = (sightMods[key] != null && sightMods[key].Value > 0
                     && BatterySystem.IsInSlot(key.SightMod.Item, Singleton<GameWorld>.Instance?.MainPlayer.ActiveSlot));
                 
-                if (BatterySystemPlugin.batteryDictionary.ContainsKey(key.SightMod.Item))
-                    BatterySystemPlugin.batteryDictionary[key.SightMod.Item] = _drainingSightBattery;
+                BatterySystem.TrySetBatteryDrain(key.SightMod.Item, _drainingSightBattery);
 
                 // true for finding inactive gameobject reticles
                 foreach (CollimatorSight col in key.gameObject.GetComponentsInChildren<CollimatorSight>(true))
@@ -98,6 +99,19 @@ namespace BatterySystem
             
             //Dont change iron sights unless there are optics attached
             //FoldableSightPatch.FoldIronSights(anyOpticsWithBattery);
+
+            TrackSightComponents(Singleton<GameWorld>.Instance?.MainPlayer?.ActiveSlot);
+        }
+
+        private static void TrackSightComponents(Slot slot)
+        {
+            foreach (Item item in BatterySystem.GetItemsInSlot(slot))
+            {
+                SightComponent sightComponent = item.GetItemComponent<SightComponent>();
+                if (sightComponent == null || !BatterySystem.HasBatterySlot(item)) continue;
+
+                BatterySystem.TrySetBatteryDrain(item, BatterySystem.HasChargedBattery(item));
+            }
         }
 
         private static void SetOpticNightVision(OpticSight optic, bool active)

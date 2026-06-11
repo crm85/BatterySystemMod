@@ -22,8 +22,16 @@ namespace BatterySystem
         {
             var lightModKeys = lightMods.Keys.ToArray();
             foreach (TacticalComboVisualController deviceController in lightModKeys) // tactical devices on active weapon
-                if (deviceController?.LightMod?.Item != null && IsInActiveSlot(deviceController.LightMod.Item))
-                    BatterySystemPlugin.batteryDictionary[deviceController.LightMod.Item] = lightMods[deviceController]?.Value > 0;
+            {
+                if (deviceController?.LightMod?.Item == null || !IsInActiveSlot(deviceController.LightMod.Item)) continue;
+
+                BatterySystem.TrySetBatteryDrain(
+                    deviceController.LightMod.Item,
+                    deviceController.LightMod.IsActive && lightMods[deviceController]?.Value > 0);
+            }
+
+            TrackLightComponents(BatterySystemPlugin.localInventory?.Equipment.GetSlot(EquipmentSlot.Headwear));
+            TrackLightComponents(Singleton<GameWorld>.Instance?.MainPlayer?.ActiveSlot);
         }
 
         public static void SetDeviceComponents(TacticalComboVisualController deviceInstance)
@@ -39,7 +47,7 @@ namespace BatterySystem
             {
                 // if sight is already in dictionary, dont add it
                 if (!lightMods.Keys.Any(key => key?.LightMod?.Item == deviceInstance.LightMod.Item))
-                    lightMods.Add(deviceInstance, deviceInstance.LightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault());
+                    lightMods.Add(deviceInstance, BatterySystem.GetBatteryResource(deviceInstance.LightMod.Item));
             }
             CheckDeviceIfDraining();
             BatterySystem.UpdateBatteryDictionary();
@@ -55,14 +63,31 @@ namespace BatterySystem
                     continue;
                 }
 
-                ResourceComponent deviceBattery = deviceController.LightMod.Item.GetItemComponentsInChildren<ResourceComponent>().FirstOrDefault();
+                ResourceComponent deviceBattery = BatterySystem.GetBatteryResource(deviceController.LightMod.Item);
                 lightMods[deviceController] = deviceBattery;
                 _drainingTacDeviceBattery = (deviceBattery != null && deviceController.LightMod.IsActive && deviceBattery.Value > 0 && IsInActiveSlot(deviceController.LightMod.Item));
 
-                if (BatterySystemPlugin.batteryDictionary.ContainsKey(deviceController.LightMod.Item))
-                    BatterySystemPlugin.batteryDictionary[deviceController.LightMod.Item] = _drainingTacDeviceBattery;
+                BatterySystem.TrySetBatteryDrain(deviceController.LightMod.Item, _drainingTacDeviceBattery);
 
                 SetDeviceActive(deviceController, _drainingTacDeviceBattery);
+            }
+
+            TrackLightComponents(BatterySystemPlugin.localInventory?.Equipment.GetSlot(EquipmentSlot.Headwear));
+            TrackLightComponents(Singleton<GameWorld>.Instance?.MainPlayer?.ActiveSlot);
+        }
+
+        private static void TrackLightComponents(Slot slot)
+        {
+            foreach (Item item in BatterySystem.GetItemsInSlot(slot))
+            {
+                LightComponent lightComponent = item.GetItemComponent<LightComponent>();
+                if (lightComponent == null || !BatterySystem.HasBatterySlot(item)) continue;
+
+                bool hasChargedBattery = BatterySystem.HasChargedBattery(item);
+                if (lightComponent.IsActive && !hasChargedBattery)
+                    lightComponent.IsActive = false;
+
+                BatterySystem.TrySetBatteryDrain(item, lightComponent.IsActive && hasChargedBattery);
             }
         }
 
