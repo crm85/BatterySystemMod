@@ -12,6 +12,15 @@ namespace BatterySystem.Configs
 		public static ConfigEntry<float> QuestPresenceAreaSize { get; private set; }
 		public static ConfigEntry<bool> QuestPresenceShowNotification { get; private set; }
 		public static ConfigEntry<bool> EnableWhiteFlareTrainSummon { get; private set; }
+		public static ConfigEntry<bool> EnableSmokeOccluders { get; private set; }
+		public static ConfigEntry<int> SmokeOccluderDensity { get; private set; }
+		public static ConfigEntry<float> SmokeOccluderRadiusMultiplier { get; private set; }
+		public static ConfigEntry<bool> SmokeOccluderDebugVisuals { get; private set; }
+		public static ConfigEntry<bool> ReplaceM18SmokeVisual { get; private set; }
+		public static ConfigEntry<int> M18AirdropPlumeCount { get; private set; }
+		public static ConfigEntry<float> M18AirdropPlumeScale { get; private set; }
+		public static ConfigEntry<float> M18AirdropSmokeAmount { get; private set; }
+		public static ConfigEntry<float> M18SmokeOccluderRadiusMultiplier { get; private set; }
 		public static ConfigEntry<bool> AutoUnfold { get; private set; }
         public static ConfigEntry<bool> IsRealism { get; private set; }
         public static ConfigEntry<int> SpawnDurabilityMin { get; private set; }
@@ -60,6 +69,51 @@ namespace BatterySystem.Configs
 					new ConfigDescription("Summon map trains when the local player fires a successful white flare.",
 					null,
 					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 25 }));
+
+				EnableSmokeOccluders = Config.Bind(generalSettings, "Enable Smoke Occluders", true,
+					new ConfigDescription("Spawn invisible foliage occluders inside active smoke grenades so bots lose sight through smoke.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 24 }));
+
+				SmokeOccluderDensity = Config.Bind(generalSettings, "Smoke Occluder Density", 16,
+					new ConfigDescription("How many invisible AI sight occluders to spawn per active smoke grenade.",
+					new AcceptableValueRange<int>(4, 48),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 23 }));
+
+				SmokeOccluderRadiusMultiplier = Config.Bind(generalSettings, "Smoke Occluder Radius Multiplier", 1f,
+					new ConfigDescription("Scales the invisible AI sight occluder field around active smoke grenades.",
+					new AcceptableValueRange<float>(0.25f, 2.5f),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 22 }));
+
+				SmokeOccluderDebugVisuals = Config.Bind(generalSettings, "Smoke Occluder Debug Visuals", false,
+					new ConfigDescription("Show translucent green cylinders for active smoke AI occluders.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 21 }));
+
+				ReplaceM18SmokeVisual = Config.Bind(generalSettings, "Replace M18 Smoke Visual", true,
+					new ConfigDescription("Replace the M18 grenade's vanilla smoke visual with larger airdrop-style smoke plumes.",
+					null,
+					new ConfigurationManagerAttributes { IsAdvanced = false, Order = 20 }));
+
+				M18AirdropPlumeCount = Config.Bind(generalSettings, "M18 Airdrop Plume Count", 5,
+					new ConfigDescription("How many airdrop-style smoke plume instances to spawn for M18 smoke grenades.",
+					new AcceptableValueRange<int>(1, 8),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 19 }));
+
+				M18AirdropPlumeScale = Config.Bind(generalSettings, "M18 Airdrop Plume Scale", 2.25f,
+					new ConfigDescription("Scales the airdrop-style smoke plumes used for M18 smoke grenades.",
+					new AcceptableValueRange<float>(0.5f, 4f),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 18 }));
+
+				M18AirdropSmokeAmount = Config.Bind(generalSettings, "M18 Airdrop Smoke Amount", 2.25f,
+					new ConfigDescription("Multiplies the amount and size of smoke particles in the M18 airdrop-style replacement.",
+					new AcceptableValueRange<float>(0.5f, 6f),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 17 }));
+
+				M18SmokeOccluderRadiusMultiplier = Config.Bind(generalSettings, "M18 Smoke Occluder Radius Multiplier", 1.6f,
+					new ConfigDescription("Extra radius multiplier for invisible AI sight occluders on M18 smoke grenades only.",
+					new AcceptableValueRange<float>(0.5f, 3.5f),
+					new ConfigurationManagerAttributes { IsAdvanced = true, Order = 16 }));
 
 				DrainMultiplier = Config.Bind(generalSettings, "Battery Drain Multiplier", 1f,
 					new ConfigDescription("Adjust the drain multiplier when NVG is on. By default a battery lasts an hour on NVGs and 2.5 hours on collimators.",

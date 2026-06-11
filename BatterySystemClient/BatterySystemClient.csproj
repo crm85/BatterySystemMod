@@ -62,6 +62,9 @@
     <Reference Include="spt-reflection">
       <HintPath>..\..\..\spt_311\BepInEx\plugins\spt\spt-reflection.dll</HintPath>
     </Reference>
+    <Reference Include="Sirenix.Serialization">
+      <HintPath>..\..\..\spt_311\EscapeFromTarkov_Data\Managed\Sirenix.Serialization.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -87,6 +90,9 @@
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\..\spt_311\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>..\..\..\spt_311\EscapeFromTarkov_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TerrainModule">
       <HintPath>..\..\..\spt_311\EscapeFromTarkov_Data\Managed\UnityEngine.TerrainModule.dll</HintPath>
@@ -114,6 +120,7 @@
     <Compile Include="QuestPresenceDetector.cs" />
     <Compile Include="RealismAnalyzerBatteries.cs" />
     <Compile Include="SightBatteries.cs" />
+    <Compile Include="SmokeGrenadeVisuals.cs" />
     <Compile Include="SpawnPatch.cs" />
     <Compile Include="TacticalDeviceBatteries.cs" />
     <Compile Include="TrainSummonPatch.cs" />

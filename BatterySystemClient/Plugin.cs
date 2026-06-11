@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using System;
 using System.Collections.Generic;
 using Comfort.Common;
 using UnityEngine;
@@ -66,9 +67,23 @@ namespace BatterySystem
 			new NvgHeadWearPatch().Enable();
 			new ThermalHeadWearPatch().Enable();
 			new TrainSummonPatch().Enable();
+			EnablePatchSafe("SmokeGrenadeExplosionPatch", () => new SmokeGrenadeExplosionPatch().Enable());
+			EnablePatchSafe("M18SmokeEffectSuppressionPatch", () => new M18SmokeEffectSuppressionPatch().Enable());
             //new FoldableSightPatch().Enable();
 
             InvokeRepeating(nameof(Heartbeat), 1, 1);
+		}
+
+		private void EnablePatchSafe(string patchName, Action enable)
+		{
+			try
+			{
+				enable();
+			}
+			catch (Exception ex)
+			{
+				Logger.LogWarning($"BatterySystem patch {patchName} failed to enable; continuing without it. {ex}");
+			}
 		}
 
 		//Gets called every second
