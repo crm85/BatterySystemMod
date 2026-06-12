@@ -62,6 +62,12 @@ namespace BatterySystem
 				new RealismGasAnalyserAudioPatch().Enable();
 				new RealismGeigerAudioPatch().Enable();
 			}
+			if (RealismAquapepsPurification.HasRealismFoodPoisoningSupport())
+			{
+				EnablePatchSafe("RealismAquapepsDrinkCombinePatch", () => new RealismAquapepsDrinkCombinePatch().Enable());
+				EnablePatchSafe("RealismAquapepsContextCombinePatch", () => new RealismAquapepsContextCombinePatch().Enable());
+				EnablePatchSafe("RealismAquapepsPoisoningPatch", () => new RealismAquapepsPoisoningPatch().Enable());
+			}
 			new ApplyItemPatch().Enable();
 			new SightDevicePatch().Enable();
 			new TacticalDevicePatch().Enable();

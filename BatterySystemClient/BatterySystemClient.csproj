@@ -119,6 +119,7 @@
     <Compile Include="Properties\ConfigurationManagerAttributes.cs" />
     <Compile Include="QuestPresenceDetector.cs" />
     <Compile Include="RealismAnalyzerBatteries.cs" />
+    <Compile Include="RealismAquapepsPurification.cs" />
     <Compile Include="RetreatSmokeGrenades.cs" />
     <Compile Include="SightBatteries.cs" />
     <Compile Include="SmokeGrenadeVisuals.cs" />

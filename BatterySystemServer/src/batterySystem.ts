@@ -144,8 +144,9 @@ class Mod implements IPostDBLoadMod {
         if (config.WeaponDurability?.Enabled !== false) {
             this.configureWeaponDurability(items, tables.templates.handbook);
             const traderWeaponCount = this.applyTraderWeaponDurability(tables.traders, items);
+            const locationWeaponCount = this.applyLocationWeaponDurability(tables.locations, items);
             this.patchLocationLootGenerator(container, items, logger);
-            logger.success(`BatterySystem weapon durability has been applied to ${traderWeaponCount} trader weapons!`);
+            logger.success(`BatterySystem weapon durability has been applied to ${traderWeaponCount} trader weapons and ${locationWeaponCount} world loot weapon templates!`);
         }
 
         //Jaeger trade for cr2032
@@ -460,6 +461,16 @@ class Mod implements IPostDBLoadMod {
         return changed;
     }
 
+    private applyLocationWeaponDurability(locations: Record<string, any>, items: Record<string, any>): number {
+        let changed = 0;
+
+        for (const location of Object.values(locations ?? {})) {
+            changed += this.applyWorldWeaponDurabilityToLootTemplates(location?.looseLoot, items);
+        }
+
+        return changed;
+    }
+
     private patchLocationLootGenerator(container: DependencyContainer, items: Record<string, any>, logger: ILogger): void {
         try {
             const locationLootGenerator = container.resolve<any>("LocationLootGenerator");
@@ -467,19 +478,31 @@ class Mod implements IPostDBLoadMod {
             if (prototype.__batterySystemWeaponDurabilityPatched) return;
 
             const mod = this;
-            const originalGenerateDynamicLoot = prototype.generateDynamicLoot;
-            prototype.generateDynamicLoot = function (...args: any[]) {
-                const loot = originalGenerateDynamicLoot.apply(this, args);
-                mod.applyWorldWeaponDurabilityToLootTemplates(loot, items);
-                return loot;
-            };
+            let patchedMethods = 0;
 
-            const originalGenerateStaticContainers = prototype.generateStaticContainers;
-            prototype.generateStaticContainers = function (...args: any[]) {
-                const loot = originalGenerateStaticContainers.apply(this, args);
-                mod.applyWorldWeaponDurabilityToLootTemplates(loot, items);
-                return loot;
-            };
+            for (const methodName of ["generateDynamicLoot", "generateStaticContainers"]) {
+                const originalMethod = prototype[methodName];
+                if (typeof originalMethod !== "function") continue;
+
+                prototype[methodName] = function (...args: any[]) {
+                    const loot = originalMethod.apply(this, args);
+                    if (typeof loot?.then === "function") {
+                        return loot.then((resolvedLoot: any) => {
+                            mod.applyWorldWeaponDurabilityToLootTemplates(resolvedLoot, items);
+                            return resolvedLoot;
+                        });
+                    }
+
+                    mod.applyWorldWeaponDurabilityToLootTemplates(loot, items);
+                    return loot;
+                };
+                patchedMethods++;
+            }
+
+            if (patchedMethods === 0) {
+                const warning = (logger as any).warning ?? (logger as any).error;
+                warning.call(logger, "BatterySystem could not find LocationLootGenerator methods to patch for per-raid weapon durability.");
+            }
 
             Object.defineProperty(prototype, "__batterySystemWeaponDurabilityPatched", { value: true });
         } catch (error) {
@@ -488,13 +511,25 @@ class Mod implements IPostDBLoadMod {
         }
     }
 
-    private applyWorldWeaponDurabilityToLootTemplates(lootTemplates: any[], items: Record<string, any>): number {
+    private applyWorldWeaponDurabilityToLootTemplates(lootTemplates: any, items: Record<string, any>): number {
         let changed = 0;
-        if (!Array.isArray(lootTemplates)) return changed;
+        if (!lootTemplates) return changed;
 
-        for (const lootTemplate of lootTemplates) {
-            changed += this.applyWorldWeaponDurabilityToItems(lootTemplate?.Items, lootTemplate?.Root, items);
+        if (Array.isArray(lootTemplates)) {
+            for (const lootTemplate of lootTemplates) {
+                changed += this.applyWorldWeaponDurabilityToLootTemplates(lootTemplate, items);
+            }
+
+            return changed;
         }
+
+        if (typeof lootTemplates !== "object") return changed;
+
+        changed += this.applyWorldWeaponDurabilityToItems(lootTemplates.Items, lootTemplates.Root, items);
+        changed += this.applyWorldWeaponDurabilityToItems(lootTemplates.template?.Items, lootTemplates.template?.Root, items);
+        changed += this.applyWorldWeaponDurabilityToLootTemplates(lootTemplates.spawnpoints, items);
+        changed += this.applyWorldWeaponDurabilityToLootTemplates(lootTemplates.spawnpointsForced, items);
+        changed += this.applyWorldWeaponDurabilityToLootTemplates(lootTemplates.looseLoot, items);
 
         return changed;
     }
