@@ -1,4 +1,7 @@
 {
+  "BatteryFeatures": {
+    "Enabled": true
+  },
   "WeaponDurability": {
     "Enabled": true,
     "ValuePercentileLow": 0.1,

@@ -67,83 +67,88 @@ class Mod {
         //Flir has a built-in battery. the battery doesn't show anywhere so no point
         //items[flirID]._props.MaxResource = 100;
         //items[flirID]._props.Resource = 0.05;
-        items[aaBatteryID]._props.MaxResource = 100;
-        items[aaBatteryID]._props.Resource = 100;
-        items[aaBatteryID]._props.ItemSound = "food_tin_can";
-        items[rchblBatteryID]._props.MaxResource = 100;
-        items[rchblBatteryID]._props.Resource = 100;
-        items[rchblBatteryID]._props.Prefab.path = "batteries/cr123.bundle";
-        items[rchblBatteryID]._props.ItemSound = "food_tin_can";
-        items[dBatteryID]._props.MaxResource = 100;
-        items[dBatteryID]._props.Resource = 100;
-        items[dBatteryID]._props.Prefab.path = "batteries/cr2032.bundle";
-        items[dBatteryID]._props.ItemSound = "food_tin_can";
-        items[carBatteryID]._props.MaxResource = 100;
-        items[carBatteryID]._props.Resource = 100;
-        //Credit to Jehree! // 16 locales, wtf?
-        for (const locale of locales) {
-            locale[`${rchblBatteryID} Name`] = "CR123 Rechargeable Battery";
-            locale[`${rchblBatteryID} ShortName`] = "CR123";
-            locale[`${rchblBatteryID} Description`] = "A singular CR123A Battery. These are commonly used in military and hunting sights.";
-            locale[`${dBatteryID} Name`] = "CR2032 Battery";
-            locale[`${dBatteryID} ShortName`] = "CR2032";
-            locale[`${dBatteryID} Description`] = "A multipurpose CR2032 Battery. Used from personal computers to military grade sights.";
-        }
-        ;
-        // huge thanks and credit to jbs4mx! https://github.com/jbs4bmx/SpecialSlots/
-        const pockets = items["627a4e6b255f7527fb05a0f6"];
-        this.pushUnique(pockets._props.Slots[0]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
-        this.pushUnique(pockets._props.Slots[1]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
-        this.pushUnique(pockets._props.Slots[2]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
-        //S I C C case now fits batteries in it
-        this.pushUnique(items["5d235bb686f77443f4331278"]._props.Grids[0]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
-        //add battery slots to wanted items
-        for (let id in items) {
-            if (this.shouldAddBatterySlot(id, items)) {
-                this.batteryType = this.getBatteryType(id, items);
-                if (this.hasConfiguredBatteryType(id)) {
-                    this.prepareConfiguredBatterySlotItem(id, items);
+        if (config.BatteryFeatures?.Enabled !== false) {
+            items[aaBatteryID]._props.MaxResource = 100;
+            items[aaBatteryID]._props.Resource = 100;
+            items[aaBatteryID]._props.ItemSound = "food_tin_can";
+            items[rchblBatteryID]._props.MaxResource = 100;
+            items[rchblBatteryID]._props.Resource = 100;
+            items[rchblBatteryID]._props.Prefab.path = "batteries/cr123.bundle";
+            items[rchblBatteryID]._props.ItemSound = "food_tin_can";
+            items[dBatteryID]._props.MaxResource = 100;
+            items[dBatteryID]._props.Resource = 100;
+            items[dBatteryID]._props.Prefab.path = "batteries/cr2032.bundle";
+            items[dBatteryID]._props.ItemSound = "food_tin_can";
+            items[carBatteryID]._props.MaxResource = 100;
+            items[carBatteryID]._props.Resource = 100;
+            //Credit to Jehree! // 16 locales, wtf?
+            for (const locale of locales) {
+                locale[`${rchblBatteryID} Name`] = "CR123 Rechargeable Battery";
+                locale[`${rchblBatteryID} ShortName`] = "CR123";
+                locale[`${rchblBatteryID} Description`] = "A singular CR123A Battery. These are commonly used in military and hunting sights.";
+                locale[`${dBatteryID} Name`] = "CR2032 Battery";
+                locale[`${dBatteryID} ShortName`] = "CR2032";
+                locale[`${dBatteryID} Description`] = "A multipurpose CR2032 Battery. Used from personal computers to military grade sights.";
+            }
+            ;
+            // huge thanks and credit to jbs4mx! https://github.com/jbs4bmx/SpecialSlots/
+            const pockets = items["627a4e6b255f7527fb05a0f6"];
+            this.pushUnique(pockets._props.Slots[0]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
+            this.pushUnique(pockets._props.Slots[1]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
+            this.pushUnique(pockets._props.Slots[2]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
+            //S I C C case now fits batteries in it
+            this.pushUnique(items["5d235bb686f77443f4331278"]._props.Grids[0]._props.filters[0].Filter, dBatteryID, rchblBatteryID, aaBatteryID);
+            //add battery slots to wanted items
+            for (let id in items) {
+                if (this.shouldAddBatterySlot(id, items)) {
+                    this.batteryType = this.getBatteryType(id, items);
+                    if (this.hasConfiguredBatteryType(id)) {
+                        this.prepareConfiguredBatterySlotItem(id, items);
+                    }
+                    for (const locale of locales) { // Item description now includes the battery type
+                        const oldDescription = locale[`${id} Description`] ?? "";
+                        const batteryName = locale[`${this.batteryType} Name`] ?? this.batteryType;
+                        const newDescription = oldDescription.startsWith("Uses ")
+                            ? oldDescription
+                            : "Uses " + batteryName + "\n\n" + oldDescription;
+                        locale[`${id} Description`] = newDescription;
+                    }
+                    const slots = (_a = items[id]._props).Slots ?? (_a.Slots = []);
+                    if (slots.some(slot => slot._name === "mod_equipment"))
+                        continue;
+                    slots.push({
+                        "_name": "mod_equipment",
+                        "_id": "id_" + id.toLowerCase(),
+                        "_parent": "parent_" + id.toLowerCase(),
+                        "_props": {
+                            "filters": [
+                                {
+                                    "Shift": 0,
+                                    "Filter": [
+                                        this.batteryType
+                                    ]
+                                }
+                            ]
+                        },
+                        "_required": false,
+                        "_mergeSlotWithChildren": false,
+                        "_proto": "55d30c4c4bdc2db4468b457e"
+                    });
                 }
-                for (const locale of locales) { // Item description now includes the battery type
-                    const oldDescription = locale[`${id} Description`] ?? "";
-                    const batteryName = locale[`${this.batteryType} Name`] ?? this.batteryType;
-                    const newDescription = oldDescription.startsWith("Uses ")
-                        ? oldDescription
-                        : "Uses " + batteryName + "\n\n" + oldDescription;
-                    locale[`${id} Description`] = newDescription;
+            }
+            //change spawn% for batteries on bots. the durability is adjusted in a patch.
+            //make spawn chance lower for scavs in the future?
+            for (let bot in botDB) {
+                if (botDB[bot].chances.equipmentMods != undefined) {
+                    botDB[bot].chances.equipmentMods.mod_equipment = 50;
                 }
-                const slots = (_a = items[id]._props).Slots ?? (_a.Slots = []);
-                if (slots.some(slot => slot._name === "mod_equipment"))
-                    continue;
-                slots.push({
-                    "_name": "mod_equipment",
-                    "_id": "id_" + id.toLowerCase(),
-                    "_parent": "parent_" + id.toLowerCase(),
-                    "_props": {
-                        "filters": [
-                            {
-                                "Shift": 0,
-                                "Filter": [
-                                    this.batteryType
-                                ]
-                            }
-                        ]
-                    },
-                    "_required": false,
-                    "_mergeSlotWithChildren": false,
-                    "_proto": "55d30c4c4bdc2db4468b457e"
-                });
+                if (botDB[bot].chances.weaponMods != undefined) {
+                    botDB[bot].chances.weaponMods.mod_equipment = 50;
+                }
             }
         }
-        //change spawn% for batteries on bots. the durability is adjusted in a patch.
-        //make spawn chance lower for scavs in the future?
-        for (let bot in botDB) {
-            if (botDB[bot].chances.equipmentMods != undefined) {
-                botDB[bot].chances.equipmentMods.mod_equipment = 50;
-            }
-            if (botDB[bot].chances.weaponMods != undefined) {
-                botDB[bot].chances.weaponMods.mod_equipment = 50;
-            }
+        else {
+            logger.info("BatterySystem battery features are disabled by config.");
         }
         if (config.WeaponDurability?.Enabled !== false) {
             this.configureWeaponDurability(items, tables.templates.handbook);
@@ -516,7 +521,7 @@ class Mod {
         for (const item of itemList) {
             if (!this.isWeaponTemplate(item?._tpl, items))
                 continue;
-            if (item._id !== rootId && (item.slotId || this.hasWeaponParent(item, itemList, items)))
+            if (item._id !== rootId && this.hasWeaponParent(item, itemList, items))
                 continue;
             if (this.applyWeaponDurability(item, items, "world")) {
                 changed++;

@@ -50,6 +50,7 @@ class Mod implements IPostDBLoadMod {
         //items[flirID]._props.MaxResource = 100;
         //items[flirID]._props.Resource = 0.05;
 
+        if (config.BatteryFeatures?.Enabled !== false) {
 
         items[aaBatteryID]._props.MaxResource = 100;
         items[aaBatteryID]._props.Resource = 100;
@@ -139,6 +140,9 @@ class Mod implements IPostDBLoadMod {
             if (botDB[bot].chances.weaponMods != undefined) {
                 botDB[bot].chances.weaponMods.mod_equipment = 50;
             }
+        }
+        } else {
+            logger.info("BatterySystem battery features are disabled by config.");
         }
 
         if (config.WeaponDurability?.Enabled !== false) {
@@ -540,7 +544,7 @@ class Mod implements IPostDBLoadMod {
 
         for (const item of itemList) {
             if (!this.isWeaponTemplate(item?._tpl, items)) continue;
-            if (item._id !== rootId && (item.slotId || this.hasWeaponParent(item, itemList, items))) continue;
+            if (item._id !== rootId && this.hasWeaponParent(item, itemList, items)) continue;
 
             if (this.applyWeaponDurability(item, items, "world")) {
                 changed++;
